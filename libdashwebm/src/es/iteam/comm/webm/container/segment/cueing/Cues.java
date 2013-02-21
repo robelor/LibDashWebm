@@ -2,7 +2,6 @@ package es.iteam.comm.webm.container.segment.cueing;
 
 import java.util.ArrayList;
 
-import org.ebml.BinaryElement;
 import org.ebml.EBMLReader;
 import org.ebml.Element;
 import org.ebml.MasterElement;
@@ -13,7 +12,6 @@ import android.util.Log;
 import es.iteam.comm.webm.Debug;
 import es.iteam.comm.webm.container.WebmContainer;
 import es.iteam.comm.webm.container.WebmParseException;
-import es.iteam.comm.webm.util.HexByteArray;
 
 public class Cues implements Debug {
 

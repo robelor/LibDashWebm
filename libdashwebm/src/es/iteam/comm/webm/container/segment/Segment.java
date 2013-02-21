@@ -1,17 +1,22 @@
 package es.iteam.comm.webm.container.segment;
 
+import java.util.ArrayList;
+
 import org.ebml.EBMLReader;
 import org.ebml.Element;
 import org.ebml.ElementType;
 import org.ebml.MasterElement;
 import org.ebml.io.DataSource;
 
+import android.location.Address;
+import android.media.ExifInterface;
 import android.util.Log;
 
 import es.iteam.comm.webm.Debug;
 import org.ebml.matroska.MatroskaDocType;
 import es.iteam.comm.webm.container.WebmContainer;
 import es.iteam.comm.webm.container.WebmParseException;
+import es.iteam.comm.webm.container.segment.cluster.Cluster;
 import es.iteam.comm.webm.container.segment.cueing.Cues;
 import es.iteam.comm.webm.container.segment.info.Info;
 import es.iteam.comm.webm.container.segment.seek.SeekHead;
@@ -23,7 +28,12 @@ public class Segment implements Debug {
 	private SeekHead mSeekHead;
 	private Info mInfo;
 	private Track mTrack;
+	private ArrayList<Cluster> mClusters;
 	private Cues mCues;
+
+	public Segment() {
+		mClusters = new ArrayList<Cluster>();
+	}
 
 	public SeekHead getSeekHead() {
 		return mSeekHead;
@@ -48,11 +58,19 @@ public class Segment implements Debug {
 	private void setTrack(Track track) {
 		mTrack = track;
 	}
-	
+
+	public ArrayList<Cluster> getmClusters() {
+		return mClusters;
+	}
+
+	private void addCluster(Cluster cluster) {
+		mClusters.add(cluster);
+	}
+
 	public Cues getCues() {
 		return mCues;
 	}
-	
+
 	public void setCues(Cues cues) {
 		mCues = cues;
 	}
@@ -78,70 +96,77 @@ public class Segment implements Debug {
 	}
 
 	public static Segment create(Element segmentElement, EBMLReader ebmlReader, DataSource dataSource) {
+		int exitCount = 0;
+		boolean finished = false;
+
 		Segment segment = new Segment();
 
 		Element auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
-		while (auxElement != null) {
+		while (auxElement != null && !finished) {
 			if (auxElement.equals(MatroskaDocType.SeekHead_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing SeekHead...");
 				SeekHead seekHead = SeekHead.create(auxElement, ebmlReader, dataSource);
 				segment.setSeekHead(seekHead);
-				
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
-				
+
 			} else if (auxElement.equals(MatroskaDocType.SegmentInfo_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing SegmentInfo...");
 				Info info = Info.create(auxElement, ebmlReader, dataSource);
 				segment.setInfo(info);
-				
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
 			} else if (auxElement.equals(MatroskaDocType.Cluster_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing Cluster...");
-				
+				Cluster cluster = Cluster.create(auxElement, ebmlReader, dataSource);
+				segment.addCluster(cluster);
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
 			} else if (auxElement.equals(MatroskaDocType.Tracks_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing Track...");
-				 Track track = Track.create(auxElement, ebmlReader, dataSource); 
-				 segment.setTrack(track);
-				
+				Track track = Track.create(auxElement, ebmlReader, dataSource);
+				segment.setTrack(track);
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
 			} else if (auxElement.equals(MatroskaDocType.CueingData_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing Cueing...");
-				
-				
 				Cues cues = Cues.create(auxElement, ebmlReader, dataSource);
 				segment.setCues(cues);
-				
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
 			} else if (auxElement.equals(MatroskaDocType.Attachments_Id)) {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Parsing Attachment...");
-				
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
-				
+
 			} else {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "  Unknown element: " + HexByteArray.bytesToHex(auxElement.getType()));
-				
+
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
+				
+				exitCount++;
+				if (exitCount > 5) {
+					finished = true;
+				}
 			}
-
 
 		}
 

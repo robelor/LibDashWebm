@@ -55,6 +55,8 @@ public class WebmContainer implements Debug {
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "Parsing Segment...");
 				container.setSegment(Segment.create(rootElement, reader, dataSource));
 			}
+			
+			rootElement = reader.readNextElement();
 		}
 
 		return container;

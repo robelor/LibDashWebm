@@ -1,20 +1,25 @@
 package es.iteam.comm.webm;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.ebml.io.InputStreamDataSource;
 
 import android.content.Context;
 import android.os.Environment;
+import android.util.Log;
 import es.iteam.comm.webm.container.WebmContainer;
+import es.iteam.comm.webm.container.segment.cueing.Cues;
+import es.iteam.comm.webm.util.HexByteArray;
 
-public class WebmDashStream implements Runnable {
+public class WebmDashStream implements Runnable, Debug {
 	private static final String RANGE_PROPERTY_PREFIX = "bytes=";
 
 	private InitThread mInitThread;
@@ -41,9 +46,11 @@ public class WebmDashStream implements Runnable {
 		mIndexRangeProperty = RANGE_PROPERTY_PREFIX + mIndexRange;
 
 		mInitSize = getRangeSize(initRange);
-		System.out.println("Init size: " + mInitSize);
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Init size: " + mInitSize);
 		mIndexSize = getRangeSize(indexRange);
-		System.out.println("Index size: " + mIndexSize);
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Index size: " + mIndexSize);
 
 		mInitialization = new byte[mInitSize];
 		mIndex = new byte[mIndexSize];
@@ -73,36 +80,44 @@ public class WebmDashStream implements Runnable {
 		public void run() {
 
 //			// Initialization data
-//			try {
-//				HttpURLConnection con = (HttpURLConnection) mUrl.openConnection();
-//				con.addRequestProperty("range", mInitRangeProperty);
-//				readStream2(con.getInputStream(), mInitialization);
-//				 System.out.println(HexByteArray.bytesToHex(mInitialization));
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-
-//			// Index data
-//			try {
-//				HttpURLConnection con = (HttpURLConnection) mUrl.openConnection();
-//				con.addRequestProperty("range", mIndexRangeProperty);
-//				readStream2(con.getInputStream(), mIndex);
-//				System.out.println(HexByteArray.bytesToHex(mIndex));
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-			
-			
-			File fDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-			File f = new File(fDir, "tos.webm");
-//			File f = new File(fDir, "big_buck_bunny.webm");
 			try {
-				WebmContainer.parse(new InputStreamDataSource(new FileInputStream(f)));
-			} catch (FileNotFoundException e) { 
+				HttpURLConnection con = (HttpURLConnection) mUrl.openConnection();
+				con.addRequestProperty("range", mInitRangeProperty);
+				readStream2(con.getInputStream(), mInitialization);
+				if (D)
+					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + HexByteArray.bytesToHex(mInitialization));
+				
+				InputStreamDataSource isds = new InputStreamDataSource(new ByteArrayInputStream(mInitialization));
+				WebmContainer.parse(isds);
+				
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
+			// Index data
+			try {
+				HttpURLConnection con = (HttpURLConnection) mUrl.openConnection();
+				con.addRequestProperty("range", mIndexRangeProperty);
+				readStream2(con.getInputStream(), mIndex);
+				if (D)
+					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + HexByteArray.bytesToHex(mIndex));
+				InputStreamDataSource isds = new InputStreamDataSource(new ByteArrayInputStream(mIndex));
+				Cues.create(isds);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			
+//			File fDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+//			File f = new File(fDir, "tos.webm");
+////			File f = new File(fDir, "big_buck_bunny.webm");
+//			try {
+//				WebmContainer.parse(new InputStreamDataSource(new FileInputStream(f)));
+//			} catch (FileNotFoundException e) { 
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 
 		}
 	}
@@ -151,6 +166,7 @@ public class WebmDashStream implements Runnable {
 			try {
 				initRange = Integer.parseInt(ranges[0]);
 				endRange = Integer.parseInt(ranges[1]);
+				endRange--;
 			} catch (NumberFormatException e) {
 				throw new NumberFormatException("Incorrect range");
 			}
