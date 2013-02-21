@@ -82,6 +82,7 @@ public class MatroskaDocType implements DocType
             static public byte [] OutputSamplingFrequency_Id = {0x78, (byte)0xB5};
             static public byte [] Channels_Id = {(byte)0x9F};
             static public byte [] BitDepth_Id = {0x62, 0x64};
+            
     static public byte [] CueingData_Id = {0x1C, (byte)0x53, (byte)0xBB, (byte)0x6B};
       static public byte [] CuePoint_Id = {(byte)0xBB};
         static public byte [] CueTime_Id = {(byte)0xB3};
@@ -552,59 +553,31 @@ public class MatroskaDocType implements DocType
       // Add Attachments Element
       level0.children.add(level1);
       
-      //////////////////////////////////////////
+      //TODO//////////////////////////////////////////
       
-      level1 = new ElementType("CueingData",
-              (short)1,
-              CueingData_Id,
-              ElementType.MASTER_ELEMENT,
-              new ArrayList<ElementType>());
+			level1 = new ElementType("CueingData", (short) 1, CueingData_Id, ElementType.MASTER_ELEMENT, new ArrayList<ElementType>());
 
-//	level2 = new ElementType("AttachedFile",
-//	              (short)2,
-//	              AttachedFile_Id,
-//	              ElementType.MASTER_ELEMENT,
-//	              new ArrayList<ElementType>());
-//	
-//	level3 = new ElementType("AttachedFileDescription",
-//	              (short)3,
-//	              AttachedFileDescription_Id,
-//	              ElementType.STRING_ELEMENT,
-//	              (ArrayList<ElementType>)null);
-//	level2.children.add(level3);
-//	
-//	level3 = new ElementType("AttachedFileName",
-//	              (short)3,
-//	              AttachedFileName_Id,
-//	              ElementType.STRING_ELEMENT,
-//	              (ArrayList<ElementType>)null);
-//	level2.children.add(level3);
-//	
-//	level3 = new ElementType("AttachedFileMimeType",
-//	              (short)3,
-//	              AttachedFileMimeType_Id,
-//	              ElementType.ASCII_STRING_ELEMENT,
-//	              (ArrayList<ElementType>)null);
-//	level2.children.add(level3);
-//	
-//	level3 = new ElementType("AttachedFileData",
-//	              (short)3,
-//	              AttachedFileData_Id,
-//	              ElementType.BINARY_ELEMENT,
-//	              (ArrayList<ElementType>)null);
-//	level2.children.add(level3);
-//	
-//	level3 = new ElementType("AttachedFileUID",
-//	              (short)3,
-//	              AttachedFileUID_Id,
-//	              ElementType.UINTEGER_ELEMENT,
-//	              (ArrayList<ElementType>)null);
-//	level2.children.add(level3);
-	
-	// Add AttachedFile Element
-	level1.children.add(level2);
-	// Add Attachments Element
-	level0.children.add(level1);
+			level2 = new ElementType("CuePoint", (short) 2, CuePoint_Id, ElementType.MASTER_ELEMENT, new ArrayList<ElementType>());
+
+			level3 = new ElementType("CueTime", (short) 3, CueTime_Id, ElementType.UINTEGER_ELEMENT, (ArrayList<ElementType>) null);
+			level2.children.add(level3);
+
+			level3 = new ElementType("CueTrackPositions", (short) 3, CueTrackPositions_Id, ElementType.MASTER_ELEMENT, new ArrayList<ElementType>());
+
+			level4 = new ElementType("CueTrack", (short) 4, CueTrack_Id, ElementType.UINTEGER_ELEMENT, (ArrayList<ElementType>) null);
+			level3.children.add(level4);
+
+			level4 = new ElementType("CueClusterPosition", (short) 4, CueClusterPosition_Id, ElementType.UINTEGER_ELEMENT, (ArrayList<ElementType>) null);
+			level3.children.add(level4);
+
+			level4 = new ElementType("CueBlockNumber", (short) 4, CueBlockNumber_Id, ElementType.UINTEGER_ELEMENT, (ArrayList<ElementType>) null);
+			level3.children.add(level4);
+
+			level2.children.add(level3);
+
+			level1.children.add(level2);
+
+			level0.children.add(level1);
       
       /////////////////////////////////////////
 

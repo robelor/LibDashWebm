@@ -62,8 +62,6 @@ public class Video implements Debug{
 			
 			auxElement.readData(dataSource);
 			
-			System.out.println(">>>>>**" + HexByteArray.bytesToHex(auxElement.getType()));
-			
 			if (auxElement.equals(MatroskaDocType.PixelWidth_Id)) {
 				int pixelWidth = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
@@ -76,6 +74,9 @@ public class Video implements Debug{
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        PixelHeight: " + pixelHeight);
 				video.setmHeight(pixelHeight);
 
+			}else{
+				if (D)
+					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

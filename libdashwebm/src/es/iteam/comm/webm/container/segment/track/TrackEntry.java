@@ -145,9 +145,6 @@ public class TrackEntry implements Debug {
 		Element auxElement = ((MasterElement) trackEntryElement).readNextChild(ebmlReader);
 		while (auxElement != null) {
 			
-
-			System.out.println(">>>>>" + HexByteArray.bytesToHex(auxElement.getType()));
-
 			if (auxElement.equals(MatroskaDocType.TrackNumber_Id)) {
 				auxElement.readData(dataSource);
 				long trackNumber = ((UnsignedIntegerElement) auxElement).getValue();
@@ -232,6 +229,9 @@ public class TrackEntry implements Debug {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "      Parsing Audio...");
 				trackEntry.setmAudio(Audio.create(auxElement, ebmlReader, dataSource));
+			}else{
+				if (D)
+					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

@@ -72,8 +72,6 @@ public class Audio implements Debug {
 
 			auxElement.readData(dataSource);
 
-			System.out.println(">>>>>**" + HexByteArray.bytesToHex(auxElement.getType()));
-
 			if (auxElement.equals(MatroskaDocType.Channels_Id)) {
 				int channels = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
@@ -91,6 +89,9 @@ public class Audio implements Debug {
 				if (D)
 					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        BitDepth: " + bitDepth);
 				audio.setmBitDepth(bitDepth);
+			}else{
+				if (D)
+					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

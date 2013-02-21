@@ -58,17 +58,17 @@ public class Cues implements Debug {
 		
 		
 		
-//		while (auxElement != null) {
-//			if (auxElement.equals(MatroskaDocType.CuePoint_Id)) {
-//				if (D)
-//					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    Parsing CuePoint...");
-//				CuePoint cuePoint = CuePoint.create(auxElement, ebmlReader, dataSource);
-//				cues.addCuePoint(cuePoint);
-//			}
-//
-//			auxElement.skipData(dataSource);
-//			auxElement = ((MasterElement) cuesElement).readNextChild(ebmlReader);
-//		}
+		while (auxElement != null) {
+			if (auxElement.equals(MatroskaDocType.CuePoint_Id)) {
+				if (D)
+					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    Parsing CuePoint...");
+				CuePoint cuePoint = CuePoint.create(auxElement, ebmlReader, dataSource);
+				cues.addCuePoint(cuePoint);
+			}
+
+			auxElement.skipData(dataSource);
+			auxElement = ((MasterElement) cuesElement).readNextChild(ebmlReader);
+		}
 
 		return cues;
 	}
