@@ -1,22 +1,18 @@
 package es.iteam.comm.webm;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.ebml.io.InputStreamDataSource;
 
-import es.iteam.comm.webm.container.WebmContainer;
-import es.iteam.comm.webm.util.HexByteArray;
-
 import android.content.Context;
 import android.os.Environment;
+import es.iteam.comm.webm.container.WebmContainer;
 
 public class WebmDashStream implements Runnable {
 	private static final String RANGE_PROPERTY_PREFIX = "bytes=";
