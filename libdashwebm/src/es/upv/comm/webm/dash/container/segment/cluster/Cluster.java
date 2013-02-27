@@ -18,6 +18,7 @@ import es.upv.comm.webm.dash.container.WebmParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Cluster implements Debug {
+	
 
 	public static Cluster create(DataSource dataSource) {
 		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
