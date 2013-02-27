@@ -15,11 +15,11 @@ import org.ebml.io.InputStreamDataSource;
 import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.segment.cueing.Cues;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
-public class WebmDashStream implements Runnable, Debug {
+public class Stream implements Runnable, Debug {
 	private static final String RANGE_PROPERTY_PREFIX = "bytes=";
 
 	private InitThread mInitThread;
@@ -36,7 +36,7 @@ public class WebmDashStream implements Runnable, Debug {
 	private int mIndexSize;
 	private byte[] mIndex;
 
-	public WebmDashStream(Context context, URL url, String initRange, String indexRange) {
+	public Stream(Context context, URL url, String initRange, String indexRange) {
 		mContext = context;
 		mUrl = url;
 		mInitRange = initRange;
@@ -115,7 +115,7 @@ public class WebmDashStream implements Runnable, Debug {
 			File f = new File(fDir, "tears_of_steel_480p_muxed.webm");
 //			File f = new File(fDir, "tears_of_steel_480p.webm");
 			try {
-				WebmContainer.parse(new InputStreamDataSource(new FileInputStream(f)));
+				Container.parse(new InputStreamDataSource(new FileInputStream(f)));
 			} catch (FileNotFoundException e) { 
 				// TODO Auto-generated catch block
 				e.printStackTrace();

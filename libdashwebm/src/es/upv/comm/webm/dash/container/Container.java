@@ -11,7 +11,7 @@ import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.container.header.Header;
 import es.upv.comm.webm.dash.container.segment.Segment;
 
-public class WebmContainer implements Debug {
+public class Container implements Debug {
 
 	private Header mHeader;
 	private Segment mSegment;
@@ -32,8 +32,8 @@ public class WebmContainer implements Debug {
 		mSegment = segment;
 	}
 
-	public static WebmContainer parse(DataSource dataSource) {
-		WebmContainer container = new WebmContainer();
+	public static Container parse(DataSource dataSource) {
+		Container container = new Container();
 
 		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
 		Element rootElement = reader.readNextElement();
@@ -44,7 +44,7 @@ public class WebmContainer implements Debug {
 
 			if (rootElement.equals(MatroskaDocType.EBMLHeader_Id)) {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "Parsing Header...");
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "Parsing Header...");
 				container.setHeader(Header.create(rootElement, reader, dataSource));
 			}
 			
@@ -52,7 +52,7 @@ public class WebmContainer implements Debug {
 
 			if (rootElement.equals(MatroskaDocType.Segment_Id)) {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "Parsing Segment...");
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "Parsing Segment...");
 				container.setSegment(Segment.create(rootElement, reader, dataSource));
 			}
 			

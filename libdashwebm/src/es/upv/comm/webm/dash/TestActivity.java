@@ -39,7 +39,7 @@ public class TestActivity extends Activity {
 		public void onClick(View v) {
 			try {
 				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel_480p_muxed.webm");
-				WebmDashStream dashStream = new WebmDashStream(getApplicationContext(), url,"0-250","1047205-1047286");
+				Stream dashStream = new Stream(getApplicationContext(), url,"0-250","1047205-1047286");
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}

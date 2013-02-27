@@ -11,7 +11,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
@@ -80,18 +80,18 @@ public class CuePoint implements Debug {
 				auxElement.readData(dataSource);
 				long cueTime = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "      CueTime: " + cueTime);
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      CueTime: " + cueTime);
 				cuePoint.setCueTime(cueTime);
 
 			} else if (auxElement.equals(MatroskaDocType.CueTrackPositions_Id)) {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "      Parsing CueTracksPosition...");
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Parsing CueTracksPosition...");
 				CueTrackPosition cueTrackPosition = CueTrackPosition.create(auxElement, ebmlReader, dataSource, cuePoint.getSegmentOffset());
 				cuePoint.addCueTrackPosition(cueTrackPosition);
 
 			}else{
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

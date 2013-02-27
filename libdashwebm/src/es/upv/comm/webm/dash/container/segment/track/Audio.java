@@ -10,7 +10,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
@@ -75,23 +75,23 @@ public class Audio implements Debug {
 			if (auxElement.equals(MatroskaDocType.Channels_Id)) {
 				int channels = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        Channels: " + channels);
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Channels: " + channels);
 				audio.setmChannels(channels);
 
 			} else if (auxElement.equals(MatroskaDocType.SamplingFrequency_Id)) {
 				double samplingFrequency = ((FloatElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        SamplingFreq: " + samplingFrequency);
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        SamplingFreq: " + samplingFrequency);
 				audio.setmSamplingFrequency(samplingFrequency);
 
 			} else if (auxElement.equals(MatroskaDocType.BitDepth_Id)) {
 				int bitDepth = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        BitDepth: " + bitDepth);
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        BitDepth: " + bitDepth);
 				audio.setmBitDepth(bitDepth);
 			}else{
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

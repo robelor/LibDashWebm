@@ -1,6 +1,6 @@
 package es.upv.comm.webm.dash;
 
-public class WebmDashPlayer {
+public class Player {
 	
 	// streams
 	

@@ -13,7 +13,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
@@ -50,7 +50,7 @@ public class Cluster implements Debug {
 				auxElement.readData(dataSource);
 				long timeCode = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
 				// TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
 				// track.addTrackEntry(trackEntry);
 			} else if (auxElement.equals(MatroskaDocType.ClusterSimpleBlock_Id)) {
@@ -72,7 +72,7 @@ public class Cluster implements Debug {
 				// track.addTrackEntry(trackEntry);
 			} else {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

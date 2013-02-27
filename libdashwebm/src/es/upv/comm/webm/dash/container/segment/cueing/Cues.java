@@ -10,7 +10,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 
 public class Cues implements Debug {
@@ -66,7 +66,7 @@ public class Cues implements Debug {
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.CuePoint_Id)) {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    Parsing CuePoint...");
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Parsing CuePoint...");
 				CuePoint cuePoint = CuePoint.create(auxElement, ebmlReader, dataSource, cues.getSegmentOffset());
 				cues.addCuePoint(cuePoint);
 			}

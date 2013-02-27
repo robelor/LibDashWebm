@@ -10,7 +10,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 
 public class Track implements Debug {
@@ -56,7 +56,7 @@ public class Track implements Debug {
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.TrackEntry_Id)) {
 				if (D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    Parsing TrackEntry...");
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Parsing TrackEntry...");
 				TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
 				track.addTrackEntry(trackEntry);
 			}

@@ -10,7 +10,7 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 
 public class SeekHead implements Debug{
@@ -56,7 +56,7 @@ public class SeekHead implements Debug{
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.SeekEntry_Id)) {
 				if(D)
-					Log.d(LOG_TAG, WebmContainer.class.getSimpleName()+": "+"    Parsing SeekEntry...");
+					Log.d(LOG_TAG, Container.class.getSimpleName()+": "+"    Parsing SeekEntry...");
 				Seek seek = Seek.create(auxElement, ebmlReader, dataSource);
 				seekHead.addSeek(seek);
 			}

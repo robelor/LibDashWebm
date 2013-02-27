@@ -10,7 +10,7 @@ import org.ebml.matroska.MatroskaDocType;
 import android.util.Log;
 
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.WebmContainer;
+import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.WebmParseException;
 
 public class Header implements Debug {
@@ -61,7 +61,7 @@ public class Header implements Debug {
 					throw new WebmParseException("It is not a webm/matroska type");
 				} else {
 					if(D)
-						Log.d(LOG_TAG, WebmContainer.class.getSimpleName()+": "+"  DocType: "+ docType);
+						Log.d(LOG_TAG, Container.class.getSimpleName()+": "+"  DocType: "+ docType);
 					header.setDocType(docType);
 				}
 			}
