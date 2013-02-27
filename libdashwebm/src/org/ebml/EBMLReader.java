@@ -22,7 +22,7 @@ package org.ebml;
 import org.ebml.io.*;
 import org.ebml.util.*;
 
-import es.iteam.comm.webm.util.HexByteArray;
+import es.upv.comm.webm.dash.util.HexByteArray;
 
 /**
  * EBMLReader.java
