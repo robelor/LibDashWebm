@@ -1,10 +1,10 @@
 package es.upv.comm.webm.dash.container;
 
-public class WebmParseException extends RuntimeException {
+public class ParseException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	
-	public WebmParseException(String exception) {
+	public ParseException(String exception) {
 		super(exception);
 	}
 

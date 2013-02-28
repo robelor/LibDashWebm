@@ -11,7 +11,7 @@ import org.ebml.matroska.MatroskaDocType;
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.container.Container;
-import es.upv.comm.webm.dash.container.WebmParseException;
+import es.upv.comm.webm.dash.container.ParseException;
 
 public class Track implements Debug {
 
@@ -38,7 +38,7 @@ public class Track implements Debug {
 
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
-			throw new WebmParseException("Error: Unable to scan for EBML elements");
+			throw new ParseException("Error: Unable to scan for EBML elements");
 		}
 
 		if (rootElement.equals(MatroskaDocType.Tracks_Id)) {

@@ -11,7 +11,7 @@ import android.util.Log;
 
 import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.container.Container;
-import es.upv.comm.webm.dash.container.WebmParseException;
+import es.upv.comm.webm.dash.container.ParseException;
 
 public class Header implements Debug {
 
@@ -37,7 +37,7 @@ public class Header implements Debug {
 
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
-			throw new WebmParseException("Error: Unable to scan for EBML elements");
+			throw new ParseException("Error: Unable to scan for EBML elements");
 		}
 
 		if (rootElement.equals(MatroskaDocType.EBMLHeader_Id)) {
@@ -58,7 +58,7 @@ public class Header implements Debug {
 				auxElement.readData(dataSource);
 				String docType = ((StringElement) auxElement).getValue();
 				if (docType.compareTo("matroska") != 0 && docType.compareTo("webm") != 0) {
-					throw new WebmParseException("It is not a webm/matroska type");
+					throw new ParseException("It is not a webm/matroska type");
 				} else {
 					if(D)
 						Log.d(LOG_TAG, Container.class.getSimpleName()+": "+"  DocType: "+ docType);

@@ -1,5 +1,6 @@
 package es.upv.comm.webm.dash;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -38,8 +39,11 @@ public class TestActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 			try {
-				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel_480p_muxed.webm");
-				Stream dashStream = new Stream(getApplicationContext(), url,"0-250","1047205-1047286");
+//				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel_480p_muxed.webm");
+				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel.xml");
+//				Stream dashStream = new Stream(getApplicationContext(), url,"0-250","1047205-1047286");
+				
+					Player p = new Player("http://xolotl.iteam.upv.es/tears_of_steel.xml");
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
