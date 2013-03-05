@@ -102,5 +102,17 @@ public class Representation implements Debug {
 		}
 
 	}
+	
+	public String getBaseUrl() {
+		return baseUrl;
+	}
+	
+	public String getInitRange() {
+		return initRange;
+	}
+	
+	public String getIndexRange() {
+		return indexRange;
+	}
 
 }

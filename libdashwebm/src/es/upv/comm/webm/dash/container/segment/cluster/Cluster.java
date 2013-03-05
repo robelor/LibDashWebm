@@ -1,14 +1,10 @@
 package es.upv.comm.webm.dash.container.segment.cluster;
 
-import java.util.ArrayList;
-
-import org.ebml.BinaryElement;
 import org.ebml.EBMLReader;
 import org.ebml.Element;
 import org.ebml.MasterElement;
 import org.ebml.UnsignedIntegerElement;
 import org.ebml.io.DataSource;
-import org.ebml.matroska.MatroskaBlock;
 import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
@@ -18,6 +14,16 @@ import es.upv.comm.webm.dash.container.ParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Cluster implements Debug {
+	
+	private long mTimeCode;
+	
+	public long getTimeCode() {
+		return mTimeCode;
+	}
+	
+	public void setTimeCode(long timeCode) {
+		mTimeCode = timeCode;
+	}
 	
 
 	public static Cluster create(DataSource dataSource) {
@@ -41,7 +47,7 @@ public class Cluster implements Debug {
 	}
 
 	public static Cluster create(Element clusterElement, EBMLReader ebmlReader, DataSource dataSource) {
-		Cluster track = new Cluster();
+		Cluster cluster = new Cluster();
 
 		Element auxElement = ((MasterElement) clusterElement).readNextChild(ebmlReader);
 		while (auxElement != null) {
@@ -51,8 +57,7 @@ public class Cluster implements Debug {
 				long timeCode = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
-				// TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
-				// track.addTrackEntry(trackEntry);
+				cluster.setTimeCode(timeCode);
 			} else if (auxElement.equals(MatroskaDocType.ClusterSimpleBlock_Id)) {
 //				auxElement.readData(dataSource);
 //				MatroskaBlock mb = ((MatroskaBlock) auxElement);
@@ -79,7 +84,7 @@ public class Cluster implements Debug {
 			auxElement = ((MasterElement) clusterElement).readNextChild(ebmlReader);
 		}
 
-		return track;
+		return cluster;
 	}
 
 }

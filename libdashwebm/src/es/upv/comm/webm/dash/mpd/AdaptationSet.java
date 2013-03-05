@@ -36,7 +36,7 @@ public class AdaptationSet implements Debug {
 
 	// audio
 	private String audioSamplingRate;
-	
+
 	private ArrayList<Representation> representations = new ArrayList<Representation>();
 
 	public AdaptationSet(Node adaptationSetNode) {
@@ -99,5 +99,20 @@ public class AdaptationSet implements Debug {
 			}
 
 		}
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public Representation getFirstRepresentation() {
+		if (representations.size() > 0) {
+			return representations.get(0);
+		}
+		return null;
+	}
+
+	public ArrayList<Representation> getRepresentations() {
+		return representations;
 	}
 }

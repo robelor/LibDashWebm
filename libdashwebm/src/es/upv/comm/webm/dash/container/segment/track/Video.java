@@ -81,6 +81,7 @@ public class Video implements Debug{
 
 			auxElement.skipData(dataSource);
 			auxElement = ((MasterElement) videoElement).readNextChild(ebmlReader);
+			
 		}
 
 		return video;

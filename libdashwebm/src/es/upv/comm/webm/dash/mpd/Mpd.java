@@ -19,14 +19,14 @@ import android.util.Log;
 
 public class Mpd implements Debug {
 
-	public	static final String KEY_MPD = "MPD";
-	public	static final String KEY_MPD_MEDIA_PRESENTATION_DURATION = "mediaPresentationDuration";
-	public	static final String KEY_MPD_MIN_BUFFER_TIME = "minBufferTime";
+	public static final String KEY_MPD = "MPD";
+	public static final String KEY_MPD_MEDIA_PRESENTATION_DURATION = "mediaPresentationDuration";
+	public static final String KEY_MPD_MIN_BUFFER_TIME = "minBufferTime";
 
-	public	static final String KEY_PERIOD = "Period";
-	public	static final String KEY_PERIOD_ID = "id";
-	public	static final String KEY_PERIOD_START = "start";
-	public	static final String KEY_PERIOD_DURATION = "duration";
+	public static final String KEY_PERIOD = "Period";
+	public static final String KEY_PERIOD_ID = "id";
+	public static final String KEY_PERIOD_START = "start";
+	public static final String KEY_PERIOD_DURATION = "duration";
 
 	private boolean mpdFound = false;
 	private int mpdCount = 0;
@@ -112,6 +112,15 @@ public class Mpd implements Debug {
 				}
 			}
 		}
+	}
+
+	public AdaptationSet getAdaptationSet(AdaptationSet.Type type) {
+		for (AdaptationSet adaptationSet : adaptationSets) {
+			if (adaptationSet.getType() == type) {
+				return adaptationSet;
+			}
+		}
+		return null;
 	}
 
 	public Document getDomElement(String xml) {

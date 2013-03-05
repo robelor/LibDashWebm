@@ -4,20 +4,17 @@ import java.util.ArrayList;
 
 import org.ebml.EBMLReader;
 import org.ebml.Element;
-import org.ebml.ElementType;
 import org.ebml.MasterElement;
 import org.ebml.io.DataSource;
-
-import android.location.Address;
-import android.media.ExifInterface;
-import android.util.Log;
-
 import org.ebml.matroska.MatroskaDocType;
 
+import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.ParseException;
 import es.upv.comm.webm.dash.container.segment.cluster.Cluster;
+import es.upv.comm.webm.dash.container.segment.cueing.CuePoint;
+import es.upv.comm.webm.dash.container.segment.cueing.CueTrackPosition;
 import es.upv.comm.webm.dash.container.segment.cueing.Cues;
 import es.upv.comm.webm.dash.container.segment.info.Info;
 import es.upv.comm.webm.dash.container.segment.seek.SeekHead;
@@ -171,7 +168,7 @@ public class Segment implements Debug {
 
 			} else {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Unknown element: " + HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Unknown element: " + HexByteArray.bytesToHex(auxElement.getType()) + " Offset: "+dataSource.getFilePointer());
 
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
@@ -185,6 +182,28 @@ public class Segment implements Debug {
 		}
 
 		return segment;
+	}
+
+	public void getNextBlock() {
+		
+		if(mCues!=null ){
+			CuePoint cp = mCues.getCuePoints().get(0);
+			
+			CueTrackPosition ctp= cp.getCueTrackPositions().get(0);
+			
+			if (D)
+				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************>"+ctp.getCueTrack());
+			if (D)
+				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************> Start: "+(ctp.getmCueClusterPosition()+ctp.getSegmentOffset()));
+			
+			CuePoint cp2 = mCues.getCuePoints().get(1);
+			CueTrackPosition ctp2= cp2.getCueTrackPositions().get(0);
+			if (D)
+				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************> End: "+ (ctp2.getmCueClusterPosition()+ctp2.getSegmentOffset()));
+			
+			
+		}
+		
 	}
 
 }
