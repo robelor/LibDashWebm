@@ -65,18 +65,18 @@ public class Video implements Debug{
 			if (auxElement.equals(MatroskaDocType.PixelWidth_Id)) {
 				int pixelWidth = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        PixelWidth: " + pixelWidth);
+					Log.d(LOG_TAG, Video.class.getSimpleName() + ": " + "        PixelWidth: " + pixelWidth);
 				video.setmWidth(pixelWidth);
 				
 			}else if (auxElement.equals(MatroskaDocType.PixelHeight_Id)) {
 				int pixelHeight = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        PixelHeight: " + pixelHeight);
+					Log.d(LOG_TAG, Video.class.getSimpleName() + ": " + "        PixelHeight: " + pixelHeight);
 				video.setmHeight(pixelHeight);
 
 			}else{
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Video.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

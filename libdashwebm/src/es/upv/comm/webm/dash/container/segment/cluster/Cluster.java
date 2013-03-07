@@ -56,7 +56,7 @@ public class Cluster implements Debug {
 				auxElement.readData(dataSource);
 				long timeCode = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
+					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
 				cluster.setTimeCode(timeCode);
 			} else if (auxElement.equals(MatroskaDocType.ClusterSimpleBlock_Id)) {
 //				auxElement.readData(dataSource);
@@ -64,20 +64,20 @@ public class Cluster implements Debug {
 //				mb.parseBlock();
 //
 //				if (D)
-//					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    SimpleBlock Track: " + mb.getTrackNo());
+//					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock Track: " + mb.getTrackNo());
 //				if (D)
-//					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    SimpleBlock Timecode: " + mb.getBlockTimecode());
+//					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock Timecode: " + mb.getBlockTimecode());
 //				if (D)
-//					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    SimpleBlock Size: " + mb.getSize());
+//					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock Size: " + mb.getSize());
 //				if (D & mb.isKeyFrame())
-//					Log.d(LOG_TAG, WebmContainer.class.getSimpleName() + ": " + "    SimpleBlock is key frame ");
+//					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock is key frame ");
 				
 				
 				// TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
 				// track.addTrackEntry(trackEntry);
 			} else {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

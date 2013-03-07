@@ -4,6 +4,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import es.upv.comm.webm.dash.http.ByteRange;
+
 import android.util.Log;
 
 public class Representation implements Debug {
@@ -30,7 +32,9 @@ public class Representation implements Debug {
 
 	private String baseUrl;
 	private String initRange;
+	private ByteRange initByteRange;
 	private String indexRange;
+	private ByteRange indexByteRange;
 
 	public Representation(Node representationNode) {
 
@@ -75,6 +79,8 @@ public class Representation implements Debug {
 						NamedNodeMap segmentBaseAttrs = representationChildNode.getAttributes();
 
 						indexRange = U.getAttribute(segmentBaseAttrs, KEY_SEGMENT_BASE_INDEX_RANGE);
+						if (indexRange != null && !indexRange.equals(""))
+							indexByteRange = new ByteRange(indexRange);
 						if (D)
 							Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "        IndexRange: " + indexRange);
 
@@ -85,13 +91,15 @@ public class Representation implements Debug {
 								if (initializationNode.getNodeName().equalsIgnoreCase(Representation.KEY_INITIALIZATION)) {
 									if (D)
 										Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "        Parsing Initialization node...");
-									
+
 									NamedNodeMap initializationBaseAttrs = initializationNode.getAttributes();
-									
+
 									initRange = U.getAttribute(initializationBaseAttrs, KEY_INITIALIZATION_RANGE);
+									if (initRange != null && !initRange.equals(""))
+										initByteRange = new ByteRange(initRange);
 									if (D)
 										Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "        InitRange: " + initRange);
-									
+
 								}
 							}
 						}
@@ -102,17 +110,17 @@ public class Representation implements Debug {
 		}
 
 	}
-	
+
 	public String getBaseUrl() {
 		return baseUrl;
 	}
-	
-	public String getInitRange() {
-		return initRange;
+
+	public ByteRange getInitRange() {
+		return initByteRange;
 	}
-	
-	public String getIndexRange() {
-		return indexRange;
+
+	public ByteRange getIndexRange() {
+		return indexByteRange;
 	}
 
 }

@@ -13,80 +13,83 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
-import android.media.MediaRecorder.VideoSource;
 import android.util.Log;
 
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
 
-public class Player implements Debug{
+public class Player implements Debug {
 
-	private String mUrl;
-	private String mBaseUrl;
+	private URL mUrl;
+	private URL mBaseUrl;
 
 	private String mXml;
-	
-	private Mpd mpd; 
+
+	private Mpd mpd;
 
 	private AdaptationSet mAudioAdaptationSet;
 	private AdaptationSet mVideoAdaptationSet;
-	
+
 	private Stream mAudioSream;
 	private ArrayList<Stream> mVideoStreams = new ArrayList<Stream>();
 
 	public Player(String url) {
-		mUrl = url;
-		
+
 		try {
-			URL aux = new URL(mUrl);
-			String baseUrl =aux.getProtocol()+"://"+aux.getHost()+aux.getPath();
-			baseUrl = baseUrl.substring(0, baseUrl.length()-(aux.getFile().length()-1));
-			mBaseUrl = baseUrl;
+			mUrl = new URL(url);
+			String baseUrl = mUrl.getProtocol() + "://" + mUrl.getHost() + mUrl.getPath();
+			baseUrl = baseUrl.substring(0, baseUrl.length() - (mUrl.getFile().length() - 1));
+			mBaseUrl = new URL(baseUrl);
 			if (D)
-				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: "+ mBaseUrl);
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: " + mBaseUrl);
+
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						mXml = getXmlFromUrl(mUrl);
+						mpd = new Mpd(mXml);
+
+						// sets
+						mAudioAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Audio);
+						mVideoAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Video);
+
+						// audio stream
+
+						mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
+
+						// video streams
+						for (Representation representation : mVideoAdaptationSet.getRepresentations()) {
+							Stream videoStream = new Stream(representation, mBaseUrl);
+							mVideoStreams.add(videoStream);
+						}
+
+						Stream vs = mVideoStreams.get(0);
+						if (vs != null) {
+							vs.getNextBlock();
+						}
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					}
+
+				}
+			}).start();
+
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
 
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				mXml = getXmlFromUrl(mUrl);
-				System.out.println(mXml);
-				mpd = new Mpd(mXml);
-				
-				// sets
-				mAudioAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Audio);
-				mVideoAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Video);
-				
-				// audio stream
-				mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(),mBaseUrl);
-				
-				// video streams
-				for (Representation representation : mVideoAdaptationSet.getRepresentations()) {
-					Stream videoStream = new Stream(representation, mBaseUrl);
-					mVideoStreams.add(videoStream);
-				}
-				
-				Stream vs = mVideoStreams.get(0);
-				if(vs!=null){
-					vs.getNextBlock();
-				}
-
-			}
-		}).start();
-
 	}
 
-	public String getXmlFromUrl(String url) {
+	public String getXmlFromUrl(URL url) {
 		String xml = null;
 
 		try {
 			// defaultHttpClient
 			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(url);
+			HttpPost httpPost = new HttpPost(url.toString());
 
 			HttpResponse httpResponse = httpClient.execute(httpPost);
 			HttpEntity httpEntity = httpResponse.getEntity();

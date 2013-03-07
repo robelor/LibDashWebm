@@ -149,14 +149,14 @@ public class TrackEntry implements Debug {
 				auxElement.readData(dataSource);
 				long trackNumber = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackNumber: " + trackNumber);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackNumber: " + trackNumber);
 				trackEntry.setTrackNumber(trackNumber);
 
 			} else if (auxElement.equals(MatroskaDocType.TrackUID_Id)) {
 				auxElement.readData(dataSource);
 				long trackUid = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackUid: " + trackUid);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackUid: " + trackUid);
 				trackEntry.setmTrackUid(trackUid);
 
 			}else if (auxElement.equals(MatroskaDocType.TrackFlagLacing)) {
@@ -168,7 +168,7 @@ public class TrackEntry implements Debug {
 						flag = true;
 					}
 					if (D)
-						Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      FlagLacing: " + flag);
+						Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      FlagLacing: " + flag);
 					trackEntry.setmFlagLacing(flag);
 				}
 
@@ -181,7 +181,7 @@ public class TrackEntry implements Debug {
 						flag = true;
 					}
 					if (D)
-						Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      FlagDefault: " + flag);
+						Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      FlagDefault: " + flag);
 					trackEntry.setmFlagDefault(flag);
 				}
 
@@ -189,49 +189,49 @@ public class TrackEntry implements Debug {
 				auxElement.readData(dataSource);
 				String codecId = ((StringElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      CodedId: " + codecId);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      CodedId: " + codecId);
 				trackEntry.setmCodecId(codecId);
 
 			}  else if (auxElement.equals(MatroskaDocType.TrackType_Id)) {
 				auxElement.readData(dataSource);
 				byte trackType = (byte) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackType: " + trackType); 
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackType: " + trackType); 
 				trackEntry.setmTrackType(trackType);
 
 			} else if (auxElement.equals(MatroskaDocType.TrackDefaultDuration_Id)) {
 				auxElement.readData(dataSource);
 				long defaulDuration = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackDefaultDuration: " + defaulDuration);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackDefaultDuration: " + defaulDuration);
 				trackEntry.setmTrackDefaultDuration(defaulDuration);
 
 			} else if (auxElement.equals(MatroskaDocType.TrackName_Id)) {
 				auxElement.readData(dataSource);
 				String trackName = ((StringElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackName: " + trackName);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackName: " + trackName);
 				trackEntry.setmTrackName(trackName);
 
 			} else if (auxElement.equals(MatroskaDocType.TrackLanguage_Id)) {
 				auxElement.readData(dataSource);
 				String trackLanguage = ((StringElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TrackLanguage: " + trackLanguage);
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      TrackLanguage: " + trackLanguage);
 				trackEntry.setmTrackName(trackLanguage);
 				
 			} else if (auxElement.equals(MatroskaDocType.TrackVideo_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Parsing Video...");
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      Parsing Video...");
 				trackEntry.setmVideo(Video.create(auxElement, ebmlReader, dataSource));
 				
 			}else if (auxElement.equals(MatroskaDocType.TrackAudio_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Parsing Audio...");
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      Parsing Audio...");
 				trackEntry.setmAudio(Audio.create(auxElement, ebmlReader, dataSource));
 			}else{
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, TrackEntry.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

@@ -74,17 +74,17 @@ public class Info implements Debug {
 			if (auxElement.equals(MatroskaDocType.TimecodeScale_Id)) {
 				long timeCodeScale = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      TimeCodeScale: " + timeCodeScale);
+					Log.d(LOG_TAG, Info.class.getSimpleName() + ": " + "      TimeCodeScale: " + timeCodeScale);
 				info.setTimeCodeScale(timeCodeScale);
 			} else if (auxElement.equals(MatroskaDocType.Duration_Id)) {
 				double duration = ((FloatElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Duration: " + duration);
+					Log.d(LOG_TAG, Info.class.getSimpleName() + ": " + "      Duration: " + duration);
 				info.setDuration(duration);
 			} else if (auxElement.equals(MatroskaDocType.Title_Id)) {
 				String title = ((StringElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Title: " + title);
+					Log.d(LOG_TAG, Info.class.getSimpleName() + ": " + "      Title: " + title);
 				info.setTitle(title);
 			}
 

@@ -1,6 +1,7 @@
 package es.upv.comm.webm.dash.container.segment.cueing;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.ebml.EBMLReader;
 import org.ebml.Element;
@@ -27,8 +28,11 @@ public class Cues implements Debug {
 		return mSegmentOffset;
 	}
 	
-	private void setSegmentOffset(int segmentOffset) {
+	public void setSegmentOffset(int segmentOffset) {
 		mSegmentOffset = segmentOffset;
+		for (CuePoint cuePoint : mCuePoints) {
+			cuePoint.setSegmentOffset(mSegmentOffset);
+		}
 	}
 
 	public ArrayList<CuePoint> getCuePoints() {
@@ -39,35 +43,34 @@ public class Cues implements Debug {
 		mCuePoints.add(cuePoint);
 	}
 
-	public static Cues create(DataSource dataSource, int segmentOffset) {
+	public static Cues create(DataSource dataSource) {
 		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
-		return create(reader, dataSource, segmentOffset);
+		return create(reader, dataSource);
 	}
 
-	private static Cues create(EBMLReader ebmlReader, DataSource dataSource, int segmentOffset) {
+	private static Cues create(EBMLReader ebmlReader, DataSource dataSource) {
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
 			throw new ParseException("Error: Unable to scan for EBML elements");
 		}
 
 		if (rootElement.equals(MatroskaDocType.CueingData_Id)) {
-			return create(rootElement, ebmlReader, dataSource, segmentOffset);
+			return create(rootElement, ebmlReader, dataSource);
 		} else {
 			return null;
 		}
 	}
 
-	public static Cues create(Element cuesElement, EBMLReader ebmlReader, DataSource dataSource, int segmentOffset) { 
+	public static Cues create(Element cuesElement, EBMLReader ebmlReader, DataSource dataSource) { 
 		Cues cues = new Cues();
-		cues.setSegmentOffset(segmentOffset);
 		
 		Element auxElement = ((MasterElement) cuesElement).readNextChild(ebmlReader);
 		
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.CuePoint_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Parsing CuePoint...");
-				CuePoint cuePoint = CuePoint.create(auxElement, ebmlReader, dataSource, cues.getSegmentOffset());
+					Log.d(LOG_TAG, Cues.class.getSimpleName() + ": " + "    Parsing CuePoint...");
+				CuePoint cuePoint = CuePoint.create(auxElement, ebmlReader, dataSource);
 				cues.addCuePoint(cuePoint);
 			}
 

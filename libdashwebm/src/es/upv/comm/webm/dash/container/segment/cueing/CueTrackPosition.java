@@ -83,26 +83,26 @@ public class CueTrackPosition implements Debug {
 				auxElement.readData(dataSource);
 				long cueTrack = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        CueTrack: " + cueTrack);
+					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueTrack: " + cueTrack);
 				cueTrackPosition.setCueTrack(cueTrack);
 
 			} else if (auxElement.equals(MatroskaDocType.CueClusterPosition_Id)) {
 				auxElement.readData(dataSource);
 				long cueClusterPosition = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        CueClusterPosition: " + (cueClusterPosition + cueTrackPosition.getSegmentOffset() ));
+					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueClusterPosition: " + (cueClusterPosition + cueTrackPosition.getSegmentOffset() ));
 				cueTrackPosition.setmCueClusterPosition(cueClusterPosition);
 
 			} else if (auxElement.equals(MatroskaDocType.CueBlockNumber_Id)) {
 				auxElement.readData(dataSource);
 				long cueBlockNumber = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        CueBlockNumber: " + cueBlockNumber);
+					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueBlockNumber: " + cueBlockNumber);
 				cueTrackPosition.setmCueBlockNumber(cueBlockNumber);
 
 			} else {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

@@ -75,23 +75,23 @@ public class Audio implements Debug {
 			if (auxElement.equals(MatroskaDocType.Channels_Id)) {
 				int channels = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Channels: " + channels);
+					Log.d(LOG_TAG, Audio.class.getSimpleName() + ": " + "        Channels: " + channels);
 				audio.setmChannels(channels);
 
 			} else if (auxElement.equals(MatroskaDocType.SamplingFrequency_Id)) {
 				double samplingFrequency = ((FloatElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        SamplingFreq: " + samplingFrequency);
+					Log.d(LOG_TAG, Audio.class.getSimpleName() + ": " + "        SamplingFreq: " + samplingFrequency);
 				audio.setmSamplingFrequency(samplingFrequency);
 
 			} else if (auxElement.equals(MatroskaDocType.BitDepth_Id)) {
 				int bitDepth = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        BitDepth: " + bitDepth);
+					Log.d(LOG_TAG, Audio.class.getSimpleName() + ": " + "        BitDepth: " + bitDepth);
 				audio.setmBitDepth(bitDepth);
 			}else{
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, Audio.class.getSimpleName() + ": " + "        Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

@@ -67,13 +67,13 @@ public class Seek implements Debug {
 				byte[] seedId = ((BinaryElement) auxElement).getData();
 				seek.setSeekId(seedId);
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      SeekId: " + HexByteArray.bytesToHex(seedId));
+					Log.d(LOG_TAG, Seek.class.getSimpleName() + ": " + "      SeekId: " + HexByteArray.bytesToHex(seedId));
 
 			} else if (auxElement.equals(MatroskaDocType.SeekPosition_Id)) {
 				auxElement.readData(dataSource);
 				long seekPosition = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      SeekPosition: " + seekPosition);
+					Log.d(LOG_TAG, Seek.class.getSimpleName() + ": " + "      SeekPosition: " + seekPosition);
 				seek.setSeekPosition(seekPosition);
 			}
 

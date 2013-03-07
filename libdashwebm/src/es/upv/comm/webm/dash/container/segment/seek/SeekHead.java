@@ -56,7 +56,7 @@ public class SeekHead implements Debug{
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.SeekEntry_Id)) {
 				if(D)
-					Log.d(LOG_TAG, Container.class.getSimpleName()+": "+"    Parsing SeekEntry...");
+					Log.d(LOG_TAG, SeekHead.class.getSimpleName()+": "+"    Parsing SeekEntry...");
 				Seek seek = Seek.create(auxElement, ebmlReader, dataSource);
 				seekHead.addSeek(seek);
 			}

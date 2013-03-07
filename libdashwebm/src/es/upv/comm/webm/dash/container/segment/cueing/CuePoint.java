@@ -29,8 +29,11 @@ public class CuePoint implements Debug {
 		return mSegmentOffset;
 	}
 	
-	private void setSegmentOffset(int segmentOffset) {
+	void setSegmentOffset(int segmentOffset) {
 		mSegmentOffset = segmentOffset;
+		for (CueTrackPosition cueTrackPosition : mCueTrackPositions) {
+			cueTrackPosition.setSegmentOffset(mSegmentOffset);
+		}
 	}
 	
 	public long getTrackNumber() {
@@ -49,12 +52,12 @@ public class CuePoint implements Debug {
 		mCueTrackPositions.add(cueTrackPosition);
 	}
 
-	public static CuePoint create(DataSource dataSource, int segmentOffset) {
+	public static CuePoint create(DataSource dataSource) {
 		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
-		return create(reader, dataSource, segmentOffset);
+		return create(reader, dataSource);
 	}
 
-	private static CuePoint create(EBMLReader ebmlReader, DataSource dataSource, int segmentOffset) {
+	private static CuePoint create(EBMLReader ebmlReader, DataSource dataSource) {
 
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
@@ -62,16 +65,15 @@ public class CuePoint implements Debug {
 		}
 
 		if (rootElement.equals(MatroskaDocType.CuePoint_Id)) {
-			return create(rootElement, ebmlReader, dataSource, segmentOffset);
+			return create(rootElement, ebmlReader, dataSource);
 		} else {
 			return null;
 		}
 
 	}
 
-	public static CuePoint create(Element cuePointElement, EBMLReader ebmlReader, DataSource dataSource, int segmentOffset) {
+	public static CuePoint create(Element cuePointElement, EBMLReader ebmlReader, DataSource dataSource) {
 		CuePoint cuePoint = new CuePoint();
-		cuePoint.setSegmentOffset(segmentOffset);
 		
 		Element auxElement = ((MasterElement) cuePointElement).readNextChild(ebmlReader);
 		while (auxElement != null) {
@@ -80,18 +82,18 @@ public class CuePoint implements Debug {
 				auxElement.readData(dataSource);
 				long cueTime = ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      CueTime: " + cueTime);
+					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      CueTime: " + cueTime);
 				cuePoint.setCueTime(cueTime);
 
 			} else if (auxElement.equals(MatroskaDocType.CueTrackPositions_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Parsing CueTracksPosition...");
+					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      Parsing CueTracksPosition...");
 				CueTrackPosition cueTrackPosition = CueTrackPosition.create(auxElement, ebmlReader, dataSource, cuePoint.getSegmentOffset());
 				cuePoint.addCueTrackPosition(cueTrackPosition);
 
 			}else{
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

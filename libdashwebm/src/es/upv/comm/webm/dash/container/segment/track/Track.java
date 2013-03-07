@@ -56,7 +56,7 @@ public class Track implements Debug {
 		while (auxElement != null) {
 			if (auxElement.equals(MatroskaDocType.TrackEntry_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "    Parsing TrackEntry...");
+					Log.d(LOG_TAG, Track.class.getSimpleName() + ": " + "    Parsing TrackEntry...");
 				TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
 				track.addTrackEntry(trackEntry);
 			}

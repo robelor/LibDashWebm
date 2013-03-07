@@ -10,7 +10,6 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.ParseException;
 import es.upv.comm.webm.dash.container.segment.cluster.Cluster;
 import es.upv.comm.webm.dash.container.segment.cueing.CuePoint;
@@ -23,13 +22,14 @@ import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Segment implements Debug {
 
+	
 	private int mSegmentOffset;
 	private SeekHead mSeekHead;
 	private Info mInfo;
 	private Track mTrack;
 	private ArrayList<Cluster> mClusters;
 	private Cues mCues;
-
+	
 	public Segment() {
 		mClusters = new ArrayList<Cluster>();
 	}
@@ -80,6 +80,7 @@ public class Segment implements Debug {
 
 	public void setCues(Cues cues) {
 		mCues = cues;
+		mCues.setSegmentOffset(mSegmentOffset);
 	}
 
 	public static Segment create(DataSource dataSource) {
@@ -110,13 +111,13 @@ public class Segment implements Debug {
 		segment.setSegmentOffset((int) dataSource.getFilePointer());
 
 		if (D)
-			Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Segment Offset: " + segment.getSegmentOffset());
+			Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Segment Offset: " + segment.getSegmentOffset());
 
 		Element auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 		while (auxElement != null && !finished) {
 			if (auxElement.equals(MatroskaDocType.SeekHead_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing SeekHead...");
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing SeekHead...");
 				SeekHead seekHead = SeekHead.create(auxElement, ebmlReader, dataSource);
 				segment.setSeekHead(seekHead);
 
@@ -125,7 +126,7 @@ public class Segment implements Debug {
 
 			} else if (auxElement.equals(MatroskaDocType.SegmentInfo_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing SegmentInfo...");
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing SegmentInfo...");
 				Info info = Info.create(auxElement, ebmlReader, dataSource);
 				segment.setInfo(info);
 
@@ -134,7 +135,7 @@ public class Segment implements Debug {
 
 			} else if (auxElement.equals(MatroskaDocType.Cluster_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing Cluster...");
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing Cluster...");
 				Cluster cluster = Cluster.create(auxElement, ebmlReader, dataSource);
 				segment.addCluster(cluster);
 
@@ -143,7 +144,7 @@ public class Segment implements Debug {
 
 			} else if (auxElement.equals(MatroskaDocType.Tracks_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing Track...");
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing Track...");
 				Track track = Track.create(auxElement, ebmlReader, dataSource);
 				segment.setTrack(track);
 
@@ -152,8 +153,9 @@ public class Segment implements Debug {
 
 			} else if (auxElement.equals(MatroskaDocType.CueingData_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing Cueing...");
-				Cues cues = Cues.create(auxElement, ebmlReader, dataSource, segment.getSegmentOffset());
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing Cueing...");
+				Cues cues = Cues.create(auxElement, ebmlReader, dataSource);
+				cues.setSegmentOffset(segment.getSegmentOffset());
 				segment.setCues(cues);
 
 				auxElement.skipData(dataSource);
@@ -161,14 +163,14 @@ public class Segment implements Debug {
 
 			} else if (auxElement.equals(MatroskaDocType.Attachments_Id)) {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Parsing Attachment...");
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing Attachment...");
 
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
 			} else {
 				if (D)
-					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "  Unknown element: " + HexByteArray.bytesToHex(auxElement.getType()) + " Offset: "+dataSource.getFilePointer());
+					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Unknown element: " + HexByteArray.bytesToHex(auxElement.getType()) + " Offset: "+dataSource.getFilePointer());
 
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
@@ -192,14 +194,14 @@ public class Segment implements Debug {
 			CueTrackPosition ctp= cp.getCueTrackPositions().get(0);
 			
 			if (D)
-				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************>"+ctp.getCueTrack());
+				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> "+ctp.getCueTrack());
 			if (D)
-				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************> Start: "+(ctp.getmCueClusterPosition()+ctp.getSegmentOffset()));
+				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> Start: "+(ctp.getmCueClusterPosition()+ctp.getSegmentOffset()));
 			
 			CuePoint cp2 = mCues.getCuePoints().get(1);
 			CueTrackPosition ctp2= cp2.getCueTrackPositions().get(0);
 			if (D)
-				Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "*************> End: "+ (ctp2.getmCueClusterPosition()+ctp2.getSegmentOffset()));
+				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> End: "+ (ctp2.getmCueClusterPosition()+ctp2.getSegmentOffset()));
 			
 			
 		}
