@@ -8,6 +8,8 @@ import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.mpd.Representation;
 
 public class Stream implements Debug {
+	
+	private int deleteme;
 
 	private URL mUrl;
 
