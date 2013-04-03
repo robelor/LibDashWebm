@@ -15,16 +15,16 @@ import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class CueTrackPosition implements Debug {
 
-	private long mCueTrack;
+	private int mCueTrack;
 	private int mSegmentOffset;
-	private long mCueClusterPosition;
-	private long mCueBlockNumber;
+	private int mCueClusterPosition;
+	private int mCueBlockNumber;
 
-	public long getCueTrack() {
+	public int getCueTrack() {
 		return mCueTrack;
 	}
 
-	private void setCueTrack(long cueTrack) {
+	private void setCueTrack(int cueTrack) {
 		mCueTrack = cueTrack;
 	}
 
@@ -36,19 +36,19 @@ public class CueTrackPosition implements Debug {
 		mSegmentOffset = segmentOffset;
 	}
 
-	public long getmCueClusterPosition() {
+	public int getmCueClusterPosition() {
 		return mCueClusterPosition;
 	}
 
-	public void setmCueClusterPosition(long mCueClusterPosition) {
+	public void setmCueClusterPosition(int mCueClusterPosition) {
 		this.mCueClusterPosition = mCueClusterPosition;
 	}
 
-	public long getmCueBlockNumber() {
+	public int getmCueBlockNumber() {
 		return mCueBlockNumber;
 	}
 
-	public void setmCueBlockNumber(long mCueBlockNumber) {
+	public void setmCueBlockNumber(int mCueBlockNumber) {
 		this.mCueBlockNumber = mCueBlockNumber;
 	}
 
@@ -81,21 +81,21 @@ public class CueTrackPosition implements Debug {
 
 			if (auxElement.equals(MatroskaDocType.CueTrack_Id)) {
 				auxElement.readData(dataSource);
-				long cueTrack = ((UnsignedIntegerElement) auxElement).getValue();
+				int cueTrack = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueTrack: " + cueTrack);
 				cueTrackPosition.setCueTrack(cueTrack);
 
 			} else if (auxElement.equals(MatroskaDocType.CueClusterPosition_Id)) {
 				auxElement.readData(dataSource);
-				long cueClusterPosition = ((UnsignedIntegerElement) auxElement).getValue();
+				int cueClusterPosition = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueClusterPosition: " + (cueClusterPosition + cueTrackPosition.getSegmentOffset() ));
 				cueTrackPosition.setmCueClusterPosition(cueClusterPosition);
 
 			} else if (auxElement.equals(MatroskaDocType.CueBlockNumber_Id)) {
 				auxElement.readData(dataSource);
-				long cueBlockNumber = ((UnsignedIntegerElement) auxElement).getValue();
+				int cueBlockNumber = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, CueTrackPosition.class.getSimpleName() + ": " + "        CueBlockNumber: " + cueBlockNumber);
 				cueTrackPosition.setmCueBlockNumber(cueBlockNumber);

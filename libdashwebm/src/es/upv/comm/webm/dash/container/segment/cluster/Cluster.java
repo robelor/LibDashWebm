@@ -5,33 +5,36 @@ import org.ebml.Element;
 import org.ebml.MasterElement;
 import org.ebml.UnsignedIntegerElement;
 import org.ebml.io.DataSource;
+import org.ebml.matroska.MatroskaBlock;
 import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.ParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Cluster implements Debug {
 	
-	private long mTimeCode;
-	
-	public long getTimeCode() {
+
+	private Element mElement;
+	private EBMLReader mEbmlReader;
+	private DataSource mDataSource;
+
+	private int mTimeCode;
+
+	public int getTimeCode() {
 		return mTimeCode;
 	}
-	
-	public void setTimeCode(long timeCode) {
+
+	public void setTimeCode(int timeCode) {
 		mTimeCode = timeCode;
 	}
-	
 
-	public static Cluster create(DataSource dataSource) {
-		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
-		return create(reader, dataSource);
+	public Cluster(DataSource dataSource) {
+		this(new EBMLReader(dataSource, MatroskaDocType.obj), dataSource);
 	}
 
-	private static Cluster create(EBMLReader ebmlReader, DataSource dataSource) {
+	private Cluster(EBMLReader ebmlReader, DataSource dataSource) {
 
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
@@ -39,30 +42,52 @@ public class Cluster implements Debug {
 		}
 
 		if (rootElement.equals(MatroskaDocType.Cluster_Id)) {
-			return create(rootElement, ebmlReader, dataSource);
+			init(rootElement, ebmlReader, dataSource);
 		} else {
-			return null;
+			throw new ParseException("Error: This is not a Cluster");
 		}
 
 	}
 
-	public static Cluster create(Element clusterElement, EBMLReader ebmlReader, DataSource dataSource) {
-		Cluster cluster = new Cluster();
+	public Cluster(Element clusterElement, EBMLReader ebmlReader, DataSource dataSource) {
+		init(clusterElement, ebmlReader, dataSource);
+	}
 
-		Element auxElement = ((MasterElement) clusterElement).readNextChild(ebmlReader);
-		while (auxElement != null) {
+	private void init(Element clusterElement, EBMLReader ebmlReader, DataSource dataSource) {
 
-			if (auxElement.equals(MatroskaDocType.ClusterTimecode_Id)) {
-				auxElement.readData(dataSource);
-				long timeCode = ((UnsignedIntegerElement) auxElement).getValue();
+		mElement = clusterElement;
+		mEbmlReader = ebmlReader;
+		mDataSource = dataSource;
+
+		Element auxElement = ((MasterElement) mElement).readNextChild(mEbmlReader);
+
+		if (auxElement != null) {
+			if ( auxElement.equals(MatroskaDocType.ClusterTimecode_Id)) {
+				auxElement.readData(mDataSource);
+				int timeCode = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    TimeCode: " + timeCode);
-				cluster.setTimeCode(timeCode);
-			} else if (auxElement.equals(MatroskaDocType.ClusterSimpleBlock_Id)) {
-//				auxElement.readData(dataSource);
-//				MatroskaBlock mb = ((MatroskaBlock) auxElement);
-//				mb.parseBlock();
-//
+				setTimeCode(timeCode);
+			}
+
+			auxElement.skipData(mDataSource);
+		}else{
+			// problemas
+		}
+	}
+
+	public MatroskaBlock getNextBlock() {
+		MatroskaBlock mb = null;
+
+		Element auxElement = ((MasterElement) mElement).readNextChild(mEbmlReader);
+
+		if (auxElement != null) {
+			if (auxElement.equals(MatroskaDocType.ClusterSimpleBlock_Id)) {
+				auxElement.readData(mDataSource);
+				mb = ((MatroskaBlock) auxElement);
+				mb.parseBlock();
+				mb.setClusterTimeCode(mTimeCode);
+
 //				if (D)
 //					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock Track: " + mb.getTrackNo());
 //				if (D)
@@ -71,20 +96,16 @@ public class Cluster implements Debug {
 //					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock Size: " + mb.getSize());
 //				if (D & mb.isKeyFrame())
 //					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    SimpleBlock is key frame ");
-				
-				
-				// TrackEntry trackEntry = TrackEntry.create(auxElement, ebmlReader, dataSource);
-				// track.addTrackEntry(trackEntry);
 			} else {
 				if (D)
 					Log.d(LOG_TAG, Cluster.class.getSimpleName() + ": " + "    Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
-			auxElement.skipData(dataSource);
-			auxElement = ((MasterElement) clusterElement).readNextChild(ebmlReader);
+			auxElement.skipData(mDataSource);
 		}
 
-		return cluster;
+		return mb;
+
 	}
 
 }

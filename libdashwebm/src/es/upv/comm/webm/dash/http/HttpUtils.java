@@ -6,16 +6,18 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import android.os.SystemClock;
+import android.util.Log;
 
-public class HttpUtils {
+import es.upv.comm.webm.dash.Debug;
 
-	private static final String RANGE_PROPERTY_PREFIX = "bytes=";
+public class HttpUtils implements Debug {
 
-	public InputStream getUrlRangeInputStream(URL url, int initByte, int endByte) {
+	public static InputStream getUrlRangeInputStream(URL url, ByteRange byteRange) {
 		HttpURLConnection connection = null;
 		try {
 			connection = (HttpURLConnection) url.openConnection();
-			String rangeProperty = RANGE_PROPERTY_PREFIX + initByte + "-" + endByte;
+			String rangeProperty = byteRange.getRangeProperty();
 			connection.addRequestProperty("range", rangeProperty);
 			return new BufferedInputStream(connection.getInputStream());
 		} catch (IOException e) {
@@ -24,14 +26,14 @@ public class HttpUtils {
 		return null;
 	}
 
-	public static byte[] readUrlRange(URL url, ByteRange range) {
+	public static byte[] readUrlRange(URL url, ByteRange range) throws IOException {
 		HttpURLConnection connection = null;
 		BufferedInputStream bis = null;
 		byte[] buffer = null;
 
 		try {
 			connection = (HttpURLConnection) url.openConnection();
-			String rangeProperty = RANGE_PROPERTY_PREFIX + range.getInitByte() + "-" + range.getEndByte();
+			String rangeProperty = range.getRangeProperty();
 			connection.addRequestProperty("range", rangeProperty);
 
 			int buffSize = range.getRangeSize();
@@ -39,6 +41,8 @@ public class HttpUtils {
 
 			int readed = 0;
 			boolean endReached = false;
+
+			long t1 = SystemClock.elapsedRealtime();
 
 			bis = new BufferedInputStream(connection.getInputStream());
 
@@ -53,9 +57,19 @@ public class HttpUtils {
 
 			}
 
+			long t2 = SystemClock.elapsedRealtime();
+
+			long ms = t2 - t1;
+
+			float speed = (float) readed / ((float) ms / (float) 1000l);
+
+			if (D)
+				Log.d(LOG_TAG, HttpUtils.class.getSimpleName() + ": " + "Readed " + readed + " Bytes in " + ms + " ms  at " + speed + " Bytes/second");
+
 			return buffer;
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw new IOException("Error reading URL range");
 		} finally {
 			if (bis != null) {
 				try {
@@ -66,7 +80,6 @@ public class HttpUtils {
 			}
 		}
 
-		return null;
 	}
 
 }

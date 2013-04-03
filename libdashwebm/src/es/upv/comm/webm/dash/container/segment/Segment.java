@@ -1,6 +1,5 @@
 package es.upv.comm.webm.dash.container.segment;
 
-import java.util.ArrayList;
 
 import org.ebml.EBMLReader;
 import org.ebml.Element;
@@ -11,7 +10,6 @@ import org.ebml.matroska.MatroskaDocType;
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.container.ParseException;
-import es.upv.comm.webm.dash.container.segment.cluster.Cluster;
 import es.upv.comm.webm.dash.container.segment.cueing.CuePoint;
 import es.upv.comm.webm.dash.container.segment.cueing.CueTrackPosition;
 import es.upv.comm.webm.dash.container.segment.cueing.Cues;
@@ -22,18 +20,12 @@ import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Segment implements Debug {
 
-	
 	private int mSegmentOffset;
 	private SeekHead mSeekHead;
 	private Info mInfo;
 	private Track mTrack;
-	private ArrayList<Cluster> mClusters;
 	private Cues mCues;
 	
-	public Segment() {
-		mClusters = new ArrayList<Cluster>();
-	}
-
 	public int getSegmentOffset() {
 		return mSegmentOffset;
 	}
@@ -64,14 +56,6 @@ public class Segment implements Debug {
 
 	private void setTrack(Track track) {
 		mTrack = track;
-	}
-
-	public ArrayList<Cluster> getmClusters() {
-		return mClusters;
-	}
-
-	private void addCluster(Cluster cluster) {
-		mClusters.add(cluster);
 	}
 
 	public Cues getCues() {
@@ -136,9 +120,9 @@ public class Segment implements Debug {
 			} else if (auxElement.equals(MatroskaDocType.Cluster_Id)) {
 				if (D)
 					Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "  Parsing Cluster...");
-				Cluster cluster = Cluster.create(auxElement, ebmlReader, dataSource);
-				segment.addCluster(cluster);
 
+				// only skip
+				
 				auxElement.skipData(dataSource);
 				auxElement = ((MasterElement) segmentElement).readNextChild(ebmlReader);
 
@@ -184,28 +168,6 @@ public class Segment implements Debug {
 		}
 
 		return segment;
-	}
-
-	public void getNextBlock() {
-		
-		if(mCues!=null ){
-			CuePoint cp = mCues.getCuePoints().get(0);
-			
-			CueTrackPosition ctp= cp.getCueTrackPositions().get(0);
-			
-			if (D)
-				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> "+ctp.getCueTrack());
-			if (D)
-				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> Start: "+(ctp.getmCueClusterPosition()+ctp.getSegmentOffset()));
-			
-			CuePoint cp2 = mCues.getCuePoints().get(1);
-			CueTrackPosition ctp2= cp2.getCueTrackPositions().get(0);
-			if (D)
-				Log.d(LOG_TAG, Segment.class.getSimpleName() + ": " + "*************> End: "+ (ctp2.getmCueClusterPosition()+ctp2.getSegmentOffset()));
-			
-			
-		}
-		
 	}
 
 }

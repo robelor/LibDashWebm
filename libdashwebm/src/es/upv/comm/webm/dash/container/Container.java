@@ -1,6 +1,7 @@
 package es.upv.comm.webm.dash.container;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -20,19 +21,19 @@ import es.upv.comm.webm.dash.http.HttpUtils;
 import es.upv.comm.webm.dash.mpd.Representation;
 
 public class Container implements Debug {
-
+	
 	private URL mContainerUrl;
 	private Representation mRepresentation;
 	
 	private Header mHeader;
 	private Segment mSegment;
 
-	public Container(URL baseUrl, Representation representation) throws MalformedURLException {
+	public Container(URL containerUrl, Representation representation) throws MalformedURLException {
 		mRepresentation = representation;
-		mContainerUrl = new URL(baseUrl + mRepresentation.getBaseUrl());
+		mContainerUrl = containerUrl;
 	}
 
-	public void init() {
+	public void init() throws IOException {
 		InputStreamDataSource isds = null;
 
 		if (D)
@@ -48,9 +49,6 @@ public class Container implements Debug {
 		
 	}
 	
-	public URL getContainerUrl() {
-		return mContainerUrl;
-	}
 
 	public Header getHeader() {
 		return mHeader;
@@ -67,6 +65,8 @@ public class Container implements Debug {
 	public void setSegment(Segment segment) {
 		mSegment = segment;
 	}
+	
+	
 
 	public void parseInitialization(DataSource dataSource) {
 
@@ -94,6 +94,9 @@ public class Container implements Debug {
 			rootElement = reader.readNextElement();
 		}
 
+	}
+	
+	public void getCues(){
 	}
 	
 	public void parseIndex(DataSource dataSource){

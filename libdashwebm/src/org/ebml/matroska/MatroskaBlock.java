@@ -29,6 +29,7 @@ public class MatroskaBlock extends BinaryElement {
   protected int TrackNo = 0;
   private boolean keyFrame;
 
+  private int mClusterTimeCode = 0;
 
 
 public MatroskaBlock(byte[] type) {
@@ -38,6 +39,10 @@ public MatroskaBlock(byte[] type) {
   //public void readData(DataSource source) {
   //  parseBlock();
   //}
+
+	public void setClusterTimeCode(int clusterTimeCode) {
+		mClusterTimeCode = clusterTimeCode;
+	}
 
   public void parseBlock() {
     int index = 0;
@@ -174,10 +179,14 @@ public MatroskaBlock(byte[] type) {
     return FrameData;
   }
 
-  public long getAdjustedBlockTimecode(long ClusterTimecode, long TimecodeScale) {
-    return ClusterTimecode + (BlockTimecode);// * TimecodeScale);
+  public long getAdjustedBlockTimecode(long clusterTimeCode, long timeCodeScale) {
+    return clusterTimeCode + (BlockTimecode);// * TimecodeScale);
   }
 
+  public int getSampleTime() {
+	    return mClusterTimeCode + (BlockTimecode);// * TimecodeScale);
+	  }
+  
   public int getTrackNo() {
     return TrackNo;
   }

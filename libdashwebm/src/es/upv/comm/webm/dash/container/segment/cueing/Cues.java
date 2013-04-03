@@ -1,7 +1,6 @@
 package es.upv.comm.webm.dash.container.segment.cueing;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.ebml.EBMLReader;
 import org.ebml.Element;
@@ -11,7 +10,6 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.ParseException;
 
 public class Cues implements Debug {

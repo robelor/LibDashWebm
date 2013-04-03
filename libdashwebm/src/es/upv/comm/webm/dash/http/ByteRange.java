@@ -7,6 +7,11 @@ public class ByteRange {
 	private int initByte;
 	private int endByte;
 
+	public ByteRange(int initByte, int endByte) {
+		this.initByte = initByte;
+		this.endByte = endByte;
+	}
+
 	public ByteRange(String byteRange) {
 		String[] ranges = byteRange.split("-");
 		if (ranges.length == 2) {
@@ -34,7 +39,11 @@ public class ByteRange {
 	}
 
 	public String getRangeProperty() {
-		return RANGE_PROPERTY_PREFIX + initByte + "-" + endByte;
+		if (endByte > 0) {
+			return RANGE_PROPERTY_PREFIX + initByte + "-" + endByte;
+		} else {
+			return RANGE_PROPERTY_PREFIX + initByte + "-";
+		}
 	}
 
 	@Override

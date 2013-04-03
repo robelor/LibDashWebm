@@ -7,16 +7,22 @@ import java.net.URL;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.VideoView;
 
 import com.example.libwebm.R;
+
+import es.upv.comm.webm.dash.Player.ActionListener;
 
 public class TestActivity extends Activity {
 
 	private Button mTestButton;
-	
+	private SurfaceView mSurfaceView;
+
+	private Player p;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +31,8 @@ public class TestActivity extends Activity {
 
 		mTestButton = (Button) findViewById(R.id.test_button);
 		mTestButton.setOnClickListener(testOnClick);
+		
+		mSurfaceView = (SurfaceView)findViewById(R.id.videoView1);
 	}
 
 	@Override
@@ -33,20 +41,38 @@ public class TestActivity extends Activity {
 		getMenuInflater().inflate(R.menu.activity_test, menu);
 		return true;
 	}
-	
+
 	private OnClickListener testOnClick = new OnClickListener() {
-		
+
 		@Override
 		public void onClick(View v) {
 			try {
-//				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel_480p_muxed.webm");
-				URL url = new URL("http://xolotl.iteam.upv.es/tears_of_steel.xml");
-//				Stream dashStream = new Stream(getApplicationContext(), url,"0-250","1047205-1047286");
+
+				p = new Player();
+				p.setVideoSurface(mSurfaceView.getHolder().getSurface());
+
+				p.setDataSource("http://xolotl.iteam.upv.es/tears_of_steel.xml");
+
+				p.prepareAsync(actionListener);
 				
-					Player p = new Player("http://xolotl.iteam.upv.es/tears_of_steel.xml");
+
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
+		}
+	};
+
+	protected ActionListener actionListener = new ActionListener() {
+
+		@Override
+		public void onSuccess() {
+			p.play();
+		}
+
+		@Override
+		public void onFailure(int error) {
+			// TODO Auto-generated method stub
+
 		}
 	};
 

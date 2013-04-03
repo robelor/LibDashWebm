@@ -11,16 +11,15 @@ import org.ebml.matroska.MatroskaDocType;
 
 import android.util.Log;
 import es.upv.comm.webm.dash.Debug;
-import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.ParseException;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class CuePoint implements Debug {
 
-	private long mCueTime;
+	private int mCueTime;
 	private int mSegmentOffset;
 	private ArrayList<CueTrackPosition> mCueTrackPositions;
-	
+
 	public CuePoint() {
 		mCueTrackPositions = new ArrayList<CueTrackPosition>();
 	}
@@ -28,28 +27,36 @@ public class CuePoint implements Debug {
 	public int getSegmentOffset() {
 		return mSegmentOffset;
 	}
-	
+
 	void setSegmentOffset(int segmentOffset) {
 		mSegmentOffset = segmentOffset;
 		for (CueTrackPosition cueTrackPosition : mCueTrackPositions) {
 			cueTrackPosition.setSegmentOffset(mSegmentOffset);
 		}
 	}
-	
-	public long getTrackNumber() {
+
+	public int getTCueTime() {
 		return mCueTime;
 	}
 
-	private void setCueTime(long cueTime) {
+	private void setCueTime(int cueTime) {
 		mCueTime = cueTime;
 	}
-	
+
 	public ArrayList<CueTrackPosition> getCueTrackPositions() {
 		return mCueTrackPositions;
 	}
-	
-	private void addCueTrackPosition(CueTrackPosition cueTrackPosition){
+
+	private void addCueTrackPosition(CueTrackPosition cueTrackPosition) {
 		mCueTrackPositions.add(cueTrackPosition);
+	}
+
+	public int getClusterOffset() {
+		if (mCueTrackPositions.size() > 0) {
+			return getSegmentOffset() + mCueTrackPositions.get(0).getmCueClusterPosition();
+		}else{
+			return -1;
+		}
 	}
 
 	public static CuePoint create(DataSource dataSource) {
@@ -74,13 +81,13 @@ public class CuePoint implements Debug {
 
 	public static CuePoint create(Element cuePointElement, EBMLReader ebmlReader, DataSource dataSource) {
 		CuePoint cuePoint = new CuePoint();
-		
+
 		Element auxElement = ((MasterElement) cuePointElement).readNextChild(ebmlReader);
 		while (auxElement != null) {
 
 			if (auxElement.equals(MatroskaDocType.CueTime_Id)) {
 				auxElement.readData(dataSource);
-				long cueTime = ((UnsignedIntegerElement) auxElement).getValue();
+				int cueTime = (int) ((UnsignedIntegerElement) auxElement).getValue();
 				if (D)
 					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      CueTime: " + cueTime);
 				cuePoint.setCueTime(cueTime);
@@ -91,9 +98,9 @@ public class CuePoint implements Debug {
 				CueTrackPosition cueTrackPosition = CueTrackPosition.create(auxElement, ebmlReader, dataSource, cuePoint.getSegmentOffset());
 				cuePoint.addCueTrackPosition(cueTrackPosition);
 
-			}else{
+			} else {
 				if (D)
-					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      Unhandled element: "+HexByteArray.bytesToHex(auxElement.getType()));
+					Log.d(LOG_TAG, CuePoint.class.getSimpleName() + ": " + "      Unhandled element: " + HexByteArray.bytesToHex(auxElement.getType()));
 			}
 
 			auxElement.skipData(dataSource);

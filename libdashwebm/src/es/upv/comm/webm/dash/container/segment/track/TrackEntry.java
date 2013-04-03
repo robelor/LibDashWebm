@@ -84,7 +84,7 @@ public class TrackEntry implements Debug {
 		this.mCodecId = mCodecId;
 	}
 
-	public long getmTrackDefaultDuration() {
+	public long getTrackDefaultDuration() {
 		return mTrackDefaultDuration;
 	}
 
@@ -108,7 +108,7 @@ public class TrackEntry implements Debug {
 		this.mTrackLanguage = mTrackLanguage;
 	}
 	
-	public Video getmVideo() {
+	public Video getVideo() {
 		return mVideo;
 	}
 	
@@ -116,7 +116,7 @@ public class TrackEntry implements Debug {
 		this.mVideo = mVideo;
 	}
 	
-	public Audio getmAudio() {
+	public Audio getAudio() {
 		return mAudio;
 	}
 	
