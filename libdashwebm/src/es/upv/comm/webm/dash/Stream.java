@@ -88,6 +88,10 @@ public class Stream implements Debug {
 
 		return seekTo(index);
 	}
+	
+	public boolean seekToNextCluster() {
+		return seekTo(++mCurrentCueIndex);
+	}
 
 	public boolean seekTo(int index) {
 		if (D)

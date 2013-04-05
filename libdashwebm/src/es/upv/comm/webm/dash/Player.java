@@ -23,6 +23,7 @@ import android.os.SystemClock;
 import android.renderscript.Sampler;
 import android.util.Log;
 import android.view.Surface;
+import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
@@ -44,6 +45,12 @@ public class Player implements Debug {
 	private int mCurrentVideoStream = -1;
 
 	private Surface mSurface;
+	
+	private AdaptationManager mAdaptationManager;
+	
+	public Player() {
+		mAdaptationManager = new AdaptationManager();
+	}
 
 
 	public void setDataSource(String url) throws MalformedURLException {
@@ -78,7 +85,7 @@ public class Player implements Debug {
 
 					// audio stream
 
-					mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
+//					mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
 
 //					MediaExtractor meA = new MediaExtractor();
 //					meA.setDataSource(mAudioSream.getStreamUrl().toString());
