@@ -2,11 +2,8 @@ package es.upv.comm.webm.dash;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.ebml.io.InputStreamDataSource;
 import org.ebml.matroska.MatroskaBlock;
@@ -16,7 +13,6 @@ import android.util.Log;
 import es.upv.comm.webm.dash.container.Container;
 import es.upv.comm.webm.dash.container.segment.cluster.Cluster;
 import es.upv.comm.webm.dash.container.segment.cueing.CuePoint;
-import es.upv.comm.webm.dash.container.segment.cueing.Cues;
 import es.upv.comm.webm.dash.container.segment.track.TrackEntry;
 import es.upv.comm.webm.dash.http.ByteRange;
 import es.upv.comm.webm.dash.http.HttpUtils;
@@ -27,11 +23,6 @@ public class Stream implements Debug {
 	private static final String MIME_VIDEO = "video/x-vnd.on2.vp8";
 	private static final String MIME_AUDIO = "audio/vorbis";
 
-	public enum State {
-		IDLE, INITIALIZED, PREPARED, STARTED
-	}
-
-	private State mState = State.IDLE;;
 
 	private Representation mRepresentation;
 	private URL mUrl;
@@ -56,42 +47,30 @@ public class Stream implements Debug {
 		mContainer.init();
 
 		mCuePoints = mContainer.getSegment().getCues().getCuePoints();
-
-		mState = State.INITIALIZED;
 	}
 
 	public URL getStreamUrl() {
 		return mUrl;
 	}
 
-	public void prepare() {
-		if (D)
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Prepare...");
-
-		seekTo(0);
-		advance();
-
-		mState = State.PREPARED;
-	}
-
-	public boolean seekToTime(int time) {
-		if (D)
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to time: " + time);
-
-		int index = -1;
-		for (CuePoint cuePoint : mCuePoints) {
-			index++;
-			if (cuePoint.getTCueTime() >= time) {
-				break;
-			}
-		}
-
-		return seekTo(index);
-	}
-
-	public boolean seekToNextCluster() {
-		return seekTo(++mCurrentCueIndex);
-	}
+//	public boolean seekToTime(int time) {
+//		if (D)
+//			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to time: " + time);
+//
+//		int index = -1;
+//		for (CuePoint cuePoint : mCuePoints) {
+//			index++;
+//			if (cuePoint.getTCueTime() >= time) {
+//				break;
+//			}
+//		}
+//
+//		return seekTo(index);
+//	}
+//
+//	public boolean seekToNextCluster() {
+//		return seekTo(++mCurrentCueIndex);
+//	}
 
 	public boolean seekTo(int index) {
 		if (D)
@@ -141,25 +120,8 @@ public class Stream implements Debug {
 
 	}
 
-	public int readSampleData(ByteBuffer byteBuffer, int offset) {
-
-		int dataLength = -1;
-
-		if (mCurrentBlock != null) {
-			byte[] data = mCurrentBlock.getData();
-			dataLength = (int) mCurrentBlock.getSize();
-
-			if (byteBuffer != null) {
-				byteBuffer.clear();
-				byteBuffer.put(data, 4, dataLength - 4);
-			}
-		}
-
-		return (int) dataLength;
-
-	}
-
 	public boolean advance() {
+//			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "advance()" );
 		if (mCurrentCluster != null) {
 			MatroskaBlock mb = mCurrentCluster.getNextBlock();
 			if (mb != null) {
@@ -170,27 +132,7 @@ public class Stream implements Debug {
 		return false;
 	}
 
-	public boolean autoAdvance() {
 
-		if (mCurrentCueIndex < 0) {
-			prepare();
-		}
-
-		MatroskaBlock mb = mCurrentCluster.getNextBlock();
-
-		if (mb != null) {
-			mCurrentBlock = mb;
-			return true;
-		} else {
-			if (seekTo(++mCurrentCueIndex)) {
-				return advance();
-			}
-			mCurrentBlock = null;
-			return false;
-
-		}
-
-	}
 
 	public int getSampleTime() {
 		return mCurrentBlock.getSampleTime();

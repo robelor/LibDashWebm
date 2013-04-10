@@ -84,13 +84,6 @@ public class Player implements Debug {
 					mAudioAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Audio);
 					mVideoAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Video);
 
-					// audio stream
-
-					// mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
-
-					// MediaExtractor meA = new MediaExtractor();
-					// meA.setDataSource(mAudioSream.getStreamUrl().toString());
-
 					// video streams
 					mVideoStreams = new Stream[mVideoAdaptationSet.getRepresentations().size()];
 					int vi = 0;
@@ -118,7 +111,6 @@ public class Player implements Debug {
 	}
 
 	public void play() {
-
 
 		VideoThread vt = new VideoThread(mVideoStreams, mBuffer, mSurface);
 		vt.start();
@@ -173,21 +165,28 @@ public class Player implements Debug {
 			mStreams = videoStreams;
 			mBuffer = buffer;
 			mSurface = surface;
-			
+
 			mVideoCodec = new MediaCodec[mStreams.length];
+			mVideoCodecInputBuffers = new ByteBuffer[mStreams.length][];
+			mVideoCodecOutputBuffers = new ByteBuffer[mStreams.length][];
 
 			for (int i = 0; i < mStreams.length; i++) {
-				
+
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Codec for  " + i);
-				
-				
+
 				Stream stream = mStreams[i];
 				MediaFormat mf = stream.getStreamFormat();
-				
+
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Codec with mediaformat  " + mf);
-				
-				mVideoCodec[i] = MediaCodec.createByCodecName(mf.getString(MediaFormat.KEY_MIME));
-				mVideoCodec[i].configure(mf, mSurface, null, 0);
+
+				mVideoCodec[i] = MediaCodec.createDecoderByType(mf.getString(MediaFormat.KEY_MIME));
+
+				if (i == 0) {
+					mVideoCodec[i].configure(mf, mSurface, null, 0);
+				} else {
+					mVideoCodec[i].configure(mf, null, null, 0);
+				}
+
 				mVideoCodec[i].start();
 				mVideoCodecInputBuffers[i] = mVideoCodec[i].getInputBuffers();
 				mVideoCodecOutputBuffers[i] = mVideoCodec[i].getOutputBuffers();
@@ -195,6 +194,8 @@ public class Player implements Debug {
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Codec: " + mVideoCodec[i].toString());
 
 			}
+			
+			mBuffer.start();
 
 		}
 
@@ -214,6 +215,8 @@ public class Player implements Debug {
 
 		@Override
 		public void run() {
+			
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Starting Video Thread..." );
 
 			boolean sawInputEOS = false;
 			boolean sawOutputEOS = false;
@@ -242,6 +245,7 @@ public class Player implements Debug {
 							sampleSize = 0;
 						} else {
 							presentationTimeUs = mBuffer.getSampleTime();
+							
 							if (mStartTime < 0) {
 								mStartTime = SystemClock.elapsedRealtime();
 							}
@@ -250,7 +254,7 @@ public class Player implements Debug {
 						mVideoCodec[si].queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM
 								: 0);
 						if (!sawInputEOS) {
-							mBuffer.advance();
+//							mBuffer.advance();
 						}
 					}
 
@@ -294,13 +298,11 @@ public class Player implements Debug {
 			}
 
 			// close
-			
+
 			for (int i = 0; i < mStreams.length; i++) {
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Releasing VideoCodec");
 				mVideoCodec[i].release();
 			}
-
-			
 
 		}
 	}

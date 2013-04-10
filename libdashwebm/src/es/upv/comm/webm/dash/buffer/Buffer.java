@@ -1,7 +1,6 @@
 package es.upv.comm.webm.dash.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,11 +11,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.ebml.matroska.MatroskaBlock;
 
+import android.util.Log;
+
+import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.Frame;
 import es.upv.comm.webm.dash.Stream;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 
-public class Buffer {
+public class Buffer implements Debug {
 
 	private Stream[] mVideoStreams;
 
@@ -33,7 +35,7 @@ public class Buffer {
 
 	private int mCurrentFedderStream = 0;
 
-	private int mCurrentSegment = 0;;
+	private int mCurrentSegment = -1;;
 	private Frame mCurrentFrame;
 
 	private HashSet<BufferReportListener> mBufferReportListeners = new HashSet<BufferReportListener>();
@@ -105,7 +107,6 @@ public class Buffer {
 
 	public boolean advance() {
 
-		mLock.lock();
 		try {
 
 			try {
@@ -117,6 +118,7 @@ public class Buffer {
 					mHeadTimestamp = 0;
 					mTailTimestamp = 0;
 				}
+				mLock.lock();
 				mFull.signal();
 				return true;
 			} catch (InterruptedException e) {
@@ -131,16 +133,19 @@ public class Buffer {
 	}
 
 	public void put(Frame frame) {
+//		Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Put, frame time: " + frame.getFrameTime());
 
 		mLock.lock();
 		try {
 			try {
 
+				mFrames.put(frame);
+
 				while (mSize <= (mTailTimestamp - mHeadTimestamp)) {
+//					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Fedder Stopped");
 					mFull.await();
 				}
 
-				mFrames.put(frame);
 				mTailTimestamp = frame.getFrameTime();
 				if (mFrames.size() == 0) {
 					mHeadTimestamp = frame.getFrameTime();
@@ -158,31 +163,26 @@ public class Buffer {
 	public int getStreamIndex() {
 		return mCurrentFrame.getStreamIndex();
 	}
-	
+
 	public long getSampleTime() {
-		return mCurrentFrame.getStreamIndex();
+		return mCurrentFrame.getFrameTime();
 	};
 
 	public int readSampleData(ByteBuffer byteBuffer, int offset) {
 
 		int dataLength = -1;
 
-		try {
-			Frame frame = mFrames.take();
-			MatroskaBlock mb = frame.getBlock();
+		Frame frame = mCurrentFrame;
+		MatroskaBlock mb = frame.getBlock();
 
-			if (mb != null) {
-				byte[] data = mb.getData();
-				dataLength = (int) mb.getSize();
+		if (mb != null) {
+			byte[] data = mb.getData();
+			dataLength = (int) mb.getSize();
 
-				if (byteBuffer != null) {
-					byteBuffer.clear();
-					byteBuffer.put(data, 4, dataLength - 4);
-				}
+			if (byteBuffer != null) {
+				byteBuffer.clear();
+				byteBuffer.put(data, 4, dataLength - 4);
 			}
-
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 
 		return (int) dataLength;
@@ -229,15 +229,7 @@ public class Buffer {
 				MatroskaBlock mb = s.getCurrentBlock();
 
 				Frame tail = new Frame(i, mb);
-				try {
-					mFrames.put(tail);
-					mTailTimestamp = tail.getFrameTime();
-					if (mFrames.size() == 0) {
-						mHeadTimestamp = tail.getFrameTime();
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				put(tail);
 
 			}
 		}
