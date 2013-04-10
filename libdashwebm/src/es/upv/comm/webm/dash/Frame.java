@@ -4,20 +4,24 @@ import org.ebml.matroska.MatroskaBlock;
 
 public class Frame {
 
-	private int mTrack;
+	private int mStreamIndex;
 	private MatroskaBlock mBlock;
 
-	public Frame(int track, MatroskaBlock block) {
-		mTrack = track;
+	public Frame(int streamIndex, MatroskaBlock block) {
+		mStreamIndex = streamIndex;
 		mBlock = block;
 	}
 	
-	public int getTrack() {
-		return mTrack;
+	public int getStreamIndex() {
+		return mStreamIndex;
 	}
 	
 	public MatroskaBlock getBlock() {
 		return mBlock;
+	}
+	
+	public int getFrameTime(){
+		return mBlock.getSampleTime();
 	}
 
 }

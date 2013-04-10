@@ -16,7 +16,6 @@ import org.apache.http.util.EntityUtils;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
-import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaCodec.BufferInfo;
 import android.os.SystemClock;
@@ -24,6 +23,7 @@ import android.renderscript.Sampler;
 import android.util.Log;
 import android.view.Surface;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
+import es.upv.comm.webm.dash.buffer.Buffer;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
@@ -41,17 +41,18 @@ public class Player implements Debug {
 	private AdaptationSet mVideoAdaptationSet;
 
 	private Stream mAudioSream;
-	private ArrayList<Stream> mVideoStreams = new ArrayList<Stream>();
+	private Stream[] mVideoStreams;
 	private int mCurrentVideoStream = -1;
 
 	private Surface mSurface;
-	
+
 	private AdaptationManager mAdaptationManager;
-	
+
+	private Buffer mBuffer;
+
 	public Player() {
 		mAdaptationManager = new AdaptationManager();
 	}
-
 
 	public void setDataSource(String url) throws MalformedURLException {
 
@@ -85,54 +86,21 @@ public class Player implements Debug {
 
 					// audio stream
 
-//					mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
+					// mAudioSream = new Stream(mAudioAdaptationSet.getFirstRepresentation(), mBaseUrl);
 
-//					MediaExtractor meA = new MediaExtractor();
-//					meA.setDataSource(mAudioSream.getStreamUrl().toString());
-
-					// System.out.println("--------------------");
-					// int iI = meA.getTrackCount();
-					// for (int j = 0; j < iI; j++) {
-					//
-					// MediaFormat mf = meA.getTrackFormat(j);
-					// System.out.println(mf);
-					//
-					// }
-					// System.out.println("--------------------");
+					// MediaExtractor meA = new MediaExtractor();
+					// meA.setDataSource(mAudioSream.getStreamUrl().toString());
 
 					// video streams
+					mVideoStreams = new Stream[mVideoAdaptationSet.getRepresentations().size()];
+					int vi = 0;
 					for (Representation representation : mVideoAdaptationSet.getRepresentations()) {
 						Stream videoStream = new Stream(representation, mBaseUrl);
 
-						// MediaExtractor me = new MediaExtractor();
-						// me.setDataSource(videoStream.getStreamUrl().toString());
-						//
-						// System.out.println("--------------------");
-						// int i = me.getTrackCount();
-						// for (int j = 0; j < i; j++) {
-						//
-						// MediaFormat mf = me.getTrackFormat(j);
-						// System.out.println(mf);
-						//
-						// }
-						//
-						// System.out.println("--------------------");
-
-						mVideoStreams.add(videoStream);
+						mVideoStreams[vi++] = videoStream;
 					}
 
-					// prepare streams
-
-					// mAudioSream.prepare();
-					//
-					 Stream vs = mVideoStreams.get(0);
-					 vs.prepare();
-					 
-					 
-						 MediaExtractor me = new MediaExtractor();
-						 me.setDataSource(vs.getStreamUrl().toString());
-
-				
+					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
 
 					actionListener.onSuccess();
 
@@ -150,51 +118,11 @@ public class Player implements Debug {
 	}
 
 	public void play() {
-//		new Thread(new Runnable() {
-//
-//			long startTime = SystemClock.elapsedRealtime();
-//
-//			@Override
-//			public void run() {
-//
-//
-//					Stream vs = mVideoStreams.get(0);
-//					
-//					boolean go = true;
-//
-//					do {
-//
-//						vs.readSampleData(null, 0);
-//						go = vs.advance();
-//
-//						int t = vs.getSampleTime();
-//
-//						while ((SystemClock.elapsedRealtime() - startTime) < t) {
-//							try {
-//								Thread.sleep(1);
-//							} catch (InterruptedException e) {
-//								// TODO Auto-generated catch block
-//								e.printStackTrace();
-//							}
-//						}
-//
-//						// System.out.println("-------->"+t +"  -  "+(SystemClock.elapsedRealtime() - startTime));
-//
-//					} while (go);
-//
-//			}
-//		}).start();
-		
-		Stream vs = mVideoStreams.get(0);
-		MediaFormat mf = vs.getStreamFormat();
-		
-		
-		
-		
-		VideoThread vt = new VideoThread(vs, mf, mSurface);
+
+
+		VideoThread vt = new VideoThread(mVideoStreams, mBuffer, mSurface);
 		vt.start();
-		
-		
+
 	}
 
 	public String getXmlFromUrl(URL url) {
@@ -230,42 +158,43 @@ public class Player implements Debug {
 
 	class VideoThread implements Runnable {
 		private Thread mVideoThread;
-		
+
 		private long mStartTime = -1;
 
-		private Stream mStream;
-		private MediaFormat mVideoFormat;
+		private Stream[] mStreams;
+		private Buffer mBuffer;
 		private Surface mSurface;
 
-		private String mVideoMime;
-		private MediaCodec mVideoCodec;
-		private ByteBuffer[] mVideoCodecInputBuffers = null;
-		private ByteBuffer[] mVideoCodecOutputBuffers = null;
-		
-		private MediaExtractor mMediaExtractor;
+		private MediaCodec[] mVideoCodec;
+		private ByteBuffer[][] mVideoCodecInputBuffers = null;
+		private ByteBuffer[][] mVideoCodecOutputBuffers = null;
 
-		public VideoThread(Stream stream, MediaFormat videoFormat, Surface surface) {
-			mStream = stream;
-			mVideoFormat = videoFormat;
+		public VideoThread(Stream[] videoStreams, Buffer buffer, Surface surface) {
+			mStreams = videoStreams;
+			mBuffer = buffer;
 			mSurface = surface;
 			
-			// media extractor
-//			mMediaExtractor = new MediaExtractor();
-//			mMediaExtractor.setDataSource(mStream.getStreamUrl().toString());
-//			mVideoFormat = mMediaExtractor.getTrackFormat(0);
-//			System.out.println("----------------");
-//			System.out.println(mVideoFormat.toString());
-//			System.out.println("----------------");
-//			mMediaExtractor.selectTrack(0);
+			mVideoCodec = new MediaCodec[mStreams.length];
 
-			// audio codec
-			mVideoMime = mVideoFormat.getString(MediaFormat.KEY_MIME);
-			mVideoCodec = MediaCodec.createDecoderByType(mVideoMime);
-			mVideoCodec.configure(mVideoFormat, mSurface, null, 0);
-			mVideoCodec.start();
-			mVideoCodecInputBuffers = mVideoCodec.getInputBuffers();
-			mVideoCodecOutputBuffers = mVideoCodec.getOutputBuffers();
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Codec: " + mVideoCodec.toString());
+			for (int i = 0; i < mStreams.length; i++) {
+				
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Codec for  " + i);
+				
+				
+				Stream stream = mStreams[i];
+				MediaFormat mf = stream.getStreamFormat();
+				
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Codec with mediaformat  " + mf);
+				
+				mVideoCodec[i] = MediaCodec.createByCodecName(mf.getString(MediaFormat.KEY_MIME));
+				mVideoCodec[i].configure(mf, mSurface, null, 0);
+				mVideoCodec[i].start();
+				mVideoCodecInputBuffers[i] = mVideoCodec[i].getInputBuffers();
+				mVideoCodecOutputBuffers[i] = mVideoCodec[i].getOutputBuffers();
+
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Codec: " + mVideoCodec[i].toString());
+
+			}
 
 		}
 
@@ -289,82 +218,89 @@ public class Player implements Debug {
 			boolean sawInputEOS = false;
 			boolean sawOutputEOS = false;
 
+			boolean eos = false;
+
 			while (Thread.currentThread() == mVideoThread && !sawInputEOS && !sawOutputEOS) {
 
 				long presentationTimeUs = -1;
-				
-				// input buffer
-				int inputBufIndex = mVideoCodec.dequeueInputBuffer(20000);
-				if (inputBufIndex >= 0) {
-					ByteBuffer dstBuf = mVideoCodecInputBuffers[inputBufIndex];
-					
-					int sampleSize = mStream.readSampleData(dstBuf, 0);
-//					System.out.println(sampleSize);
-					
-					presentationTimeUs = 0;
-					if (sampleSize < 0) {
-						sawInputEOS = true;
-						sampleSize = 0;
-					} else {
-						presentationTimeUs = mStream.getSampleTime();
-						// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Presentation time: " + presentationTimeUs);
-						if(mStartTime< 0){
-							mStartTime = SystemClock.elapsedRealtime();
+
+				eos = !mBuffer.advance();
+
+				if (!eos) {
+					int si = mBuffer.getStreamIndex();
+
+					// input buffer
+					int inputBufIndex = mVideoCodec[si].dequeueInputBuffer(20000);
+					if (inputBufIndex >= 0) {
+
+						ByteBuffer dstBuf = mVideoCodecInputBuffers[si][inputBufIndex];
+						int sampleSize = mBuffer.readSampleData(dstBuf, 0);
+
+						presentationTimeUs = 0;
+						if (sampleSize < 0) {
+							sawInputEOS = true;
+							sampleSize = 0;
+						} else {
+							presentationTimeUs = mBuffer.getSampleTime();
+							if (mStartTime < 0) {
+								mStartTime = SystemClock.elapsedRealtime();
+							}
+						}
+
+						mVideoCodec[si].queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM
+								: 0);
+						if (!sawInputEOS) {
+							mBuffer.advance();
 						}
 					}
 
-					mVideoCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
-					if (!sawInputEOS) {
-						mStream.advance();
+					while ((SystemClock.elapsedRealtime() - mStartTime) < presentationTimeUs) {
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
+
+					// output buffer
+
+					BufferInfo info = new BufferInfo();
+					final int res = mVideoCodec[si].dequeueOutputBuffer(info, 20000);
+					if (res >= 0) {
+						int outputBufIndex = res;
+						ByteBuffer buf = mVideoCodecOutputBuffers[si][outputBufIndex];
+
+						final byte[] chunk = new byte[info.size];
+						buf.get(chunk); // Read the buffer all at once
+						buf.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
+
+						// if (chunk.length > 0) {
+						// audioTrack.write(chunk, 0, chunk.length);
+						// }
+						mVideoCodec[si].releaseOutputBuffer(outputBufIndex, true /* render */);
+
+						if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+							sawOutputEOS = true;
+						}
+					} else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+						mVideoCodecOutputBuffers[si] = mVideoCodec[si].getOutputBuffers();
+					} else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+						final MediaFormat oformat = mVideoCodec[si].getOutputFormat();
+						Log.d(LOG_TAG, "Output format has changed to " + oformat);
+					}
+
 				}
 
-				
-				while ((SystemClock.elapsedRealtime() - mStartTime) < presentationTimeUs) {
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				
-				
-				// output buffer
-
-				BufferInfo info = new BufferInfo();
-				final int res = mVideoCodec.dequeueOutputBuffer(info, 20000);
-				if (res >= 0) {
-					int outputBufIndex = res;
-					ByteBuffer buf = mVideoCodecOutputBuffers[outputBufIndex];
-
-					final byte[] chunk = new byte[info.size];
-					buf.get(chunk); // Read the buffer all at once
-					buf.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
-
-					// if (chunk.length > 0) {
-					// audioTrack.write(chunk, 0, chunk.length);
-					// }
-					mVideoCodec.releaseOutputBuffer(outputBufIndex, true /* render */);
-
-					if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-						sawOutputEOS = true;
-					}
-				} else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-					mVideoCodecOutputBuffers = mVideoCodec.getOutputBuffers();
-				} else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-					final MediaFormat oformat = mVideoCodec.getOutputFormat();
-					Log.d(LOG_TAG, "Output format has changed to " + oformat);
-				}
 			}
 
 			// close
-
-			if (mVideoCodec != null) {
+			
+			for (int i = 0; i < mStreams.length; i++) {
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Releasing VideoCodec");
-				mVideoCodec.release();
+				mVideoCodec[i].release();
 			}
 
+			
 
 		}
 	}

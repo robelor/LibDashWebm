@@ -88,7 +88,7 @@ public class Stream implements Debug {
 
 		return seekTo(index);
 	}
-	
+
 	public boolean seekToNextCluster() {
 		return seekTo(++mCurrentCueIndex);
 	}
@@ -160,6 +160,17 @@ public class Stream implements Debug {
 	}
 
 	public boolean advance() {
+		if (mCurrentCluster != null) {
+			MatroskaBlock mb = mCurrentCluster.getNextBlock();
+			if (mb != null) {
+				mCurrentBlock = mb;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean autoAdvance() {
 
 		if (mCurrentCueIndex < 0) {
 			prepare();
@@ -206,6 +217,10 @@ public class Stream implements Debug {
 		}
 
 		return mf;
+	}
+
+	public MatroskaBlock getCurrentBlock() {
+		return mCurrentBlock;
 	}
 
 }

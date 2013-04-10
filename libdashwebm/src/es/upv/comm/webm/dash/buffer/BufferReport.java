@@ -4,10 +4,10 @@ public class BufferReport {
 
 	private int mSize;
 
-	private long mHeadTime;
-	private long mTailTime;
+	private int mHeadTime;
+	private int mTailTime;
 
-	public BufferReport(int size, long headTime, long tailTime) {
+	public BufferReport(int size, int headTime, int tailTime) {
 
 		mSize = size;
 		mHeadTime = headTime;
