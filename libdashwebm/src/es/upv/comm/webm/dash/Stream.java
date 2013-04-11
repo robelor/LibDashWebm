@@ -73,8 +73,8 @@ public class Stream implements Debug {
 //	}
 
 	public boolean seekTo(int index) {
-		if (D)
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to cue: " + index);
+//		if (D)
+//			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to cue: " + index);
 
 		if (index >= mCuePoints.size()) {
 			return false;

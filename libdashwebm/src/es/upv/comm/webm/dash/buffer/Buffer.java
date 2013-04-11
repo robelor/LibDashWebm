@@ -133,7 +133,7 @@ public class Buffer implements Debug {
 	}
 
 	public void put(Frame frame) {
-//		Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Put, frame time: " + frame.getFrameTime());
+		// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Put, frame time: " + frame.getFrameTime());
 
 		mLock.lock();
 		try {
@@ -142,7 +142,7 @@ public class Buffer implements Debug {
 				mFrames.put(frame);
 
 				while (mSize <= (mTailTimestamp - mHeadTimestamp)) {
-//					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Fedder Stopped");
+					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Fedder Stopped");
 					mFull.await();
 				}
 
@@ -218,10 +218,16 @@ public class Buffer implements Debug {
 
 				boolean segmentFinished = !s.advance();
 				if (segmentFinished) {
+
 					int next = mAdaptationManager.getNextSegmentTrack();
 					mCurrentFedderStream = next;
 					s = mVideoStreams[next];
-					s.seekTo(++mCurrentSegment);
+
+					boolean finished = !s.seekTo(++mCurrentSegment);
+					
+					if(finished){
+						break;
+					}
 
 					continue;
 				}
@@ -232,6 +238,8 @@ public class Buffer implements Debug {
 				put(tail);
 
 			}
+			
+			 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer feeder finised");
 		}
 
 	}
