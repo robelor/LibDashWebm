@@ -5,7 +5,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -14,14 +16,21 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
-import android.content.res.AssetFileDescriptor;
+import android.content.Context;
 import android.media.MediaCodec;
-import android.media.MediaFormat;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaFormat;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
-import android.renderscript.Sampler;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 import es.upv.comm.webm.dash.buffer.Buffer;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
@@ -29,6 +38,8 @@ import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
 
 public class Player implements Debug {
+
+	private Context mContext;
 
 	private URL mUrl;
 	private URL mBaseUrl;
@@ -44,14 +55,30 @@ public class Player implements Debug {
 	private Stream[] mVideoStreams;
 	private int mCurrentVideoStream = -1;
 
-	private Surface mSurface;
-
 	private AdaptationManager mAdaptationManager;
 
 	private Buffer mBuffer;
 
-	public Player() {
+
+	private LinearLayout mLinearLayout;
+	private SurfaceView[] mSurfaceViews = null;
+
+	private final Lock mLock = new ReentrantLock();
+	private final Condition mInit = mLock.newCondition();
+	private int mSurfaceNumber;
+	private int mInitializedSurfaces;
+
+	public Player(Context context) {
 		mAdaptationManager = new AdaptationManager();
+
+		// mHandler = new Handler(Looper.getMainLooper());
+
+		mContext = context;
+
+	}
+
+	public LinearLayout getVideoView() {
+		return mLinearLayout;
 	}
 
 	public void setDataSource(String url) throws MalformedURLException {
@@ -65,16 +92,14 @@ public class Player implements Debug {
 
 	}
 
-	public void setVideoSurface(Surface surface) {
-		mSurface = surface;
-	}
-
 	public void prepareAsync(final ActionListener actionListener) {
 
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
+
+				Looper.prepare();
 
 				try {
 					mXml = getXmlFromUrl(mUrl);
@@ -95,6 +120,22 @@ public class Player implements Debug {
 
 					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
 
+					mLinearLayout = new LinearLayout(mContext);
+					
+					mSurfaceViews = new SurfaceView[mVideoStreams.length];
+
+					mSurfaceNumber = mVideoStreams.length;
+					mInitializedSurfaces = 0;
+
+					for (int i = 0; i < mSurfaceViews.length; i++) {
+						mSurfaceViews[i] = new SurfaceView(mContext);
+						mSurfaceViews[i].getHolder().addCallback(new SurfaceHolderCallback());
+						
+						LinearLayout.LayoutParams params = new LayoutParams(400,400,1);
+						
+						mLinearLayout.addView(mSurfaceViews[i],params);
+					}
+
 					actionListener.onSuccess();
 
 				} catch (MalformedURLException e) {
@@ -112,7 +153,22 @@ public class Player implements Debug {
 
 	public void play() {
 
-		VideoThread vt = new VideoThread(mVideoStreams, mBuffer, mSurface);
+		mLock.lock();
+		try {
+			while (mInitializedSurfaces < mSurfaceNumber) {
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Initialized surfaces: "+mInitializedSurfaces +", waiting for "+mSurfaceNumber);
+				
+				mInit.await();
+
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally{
+			mLock.unlock();	
+		}
+		
+
+		VideoThread vt = new VideoThread(mVideoStreams, mBuffer);
 		vt.start();
 
 	}
@@ -155,18 +211,19 @@ public class Player implements Debug {
 
 		private Stream[] mStreams;
 		private Buffer mBuffer;
-		private Surface mSurface;
 
-		private MediaCodec[] mVideoCodec;
+		private MediaCodec[] mVideoCodecs;
 		private ByteBuffer[][] mVideoCodecInputBuffers = null;
 		private ByteBuffer[][] mVideoCodecOutputBuffers = null;
+		
+		private Handler mHandler;
 
-		public VideoThread(Stream[] videoStreams, Buffer buffer, Surface surface) {
+		public VideoThread(Stream[] videoStreams, Buffer buffer) {
+
 			mStreams = videoStreams;
 			mBuffer = buffer;
-			mSurface = surface;
 
-			mVideoCodec = new MediaCodec[mStreams.length];
+			mVideoCodecs = new MediaCodec[mStreams.length];
 			mVideoCodecInputBuffers = new ByteBuffer[mStreams.length][];
 			mVideoCodecOutputBuffers = new ByteBuffer[mStreams.length][];
 
@@ -179,22 +236,19 @@ public class Player implements Debug {
 
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Codec with mediaformat  " + mf);
 
-				mVideoCodec[i] = MediaCodec.createDecoderByType(mf.getString(MediaFormat.KEY_MIME));
+				mVideoCodecs[i] = MediaCodec.createDecoderByType(mf.getString(MediaFormat.KEY_MIME));
 
-				if (i == 0) {
-					mVideoCodec[i].configure(mf, mSurface, null, 0);
-				} else {
-					mVideoCodec[i].configure(mf, null, null, 0);
-				}
+				mVideoCodecs[i].configure(mf, mSurfaceViews[i].getHolder().getSurface(), null, 0);
+				mVideoCodecs[i].setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
 
-				mVideoCodec[i].start();
-				mVideoCodecInputBuffers[i] = mVideoCodec[i].getInputBuffers();
-				mVideoCodecOutputBuffers[i] = mVideoCodec[i].getOutputBuffers();
+				mVideoCodecs[i].start();
+				mVideoCodecInputBuffers[i] = mVideoCodecs[i].getInputBuffers();
+				mVideoCodecOutputBuffers[i] = mVideoCodecs[i].getOutputBuffers();
 
-				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Codec: " + mVideoCodec[i].toString());
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Codec: " + mVideoCodecs[i].toString());
 
 			}
-			
+
 			mBuffer.start();
 
 		}
@@ -216,7 +270,10 @@ public class Player implements Debug {
 		@Override
 		public void run() {
 			
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Starting Video Thread..." );
+			Looper.prepare();
+			mHandler = new Handler(Looper.getMainLooper());
+
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Starting Video Thread...");
 
 			boolean sawInputEOS = false;
 			boolean sawOutputEOS = false;
@@ -230,10 +287,26 @@ public class Player implements Debug {
 				eos = !mBuffer.advance();
 
 				if (!eos) {
-					int si = mBuffer.getStreamIndex();
+					final int si = mBuffer.getStreamIndex(); 
+
+				
+					
+//					mHandler.post(new Runnable() {
+//						
+//						@Override
+//						public void run() {
+//							for (int i = 0; i < mSurfaceViews.length; i++) {
+//								if(i==si){
+//									mSurfaceViews[i].bringToFront();
+//								}else{
+//									mSurfaceViews[i].setVisibility(View.GONE);
+//								}
+//							}
+//						}
+//					});
 
 					// input buffer
-					int inputBufIndex = mVideoCodec[si].dequeueInputBuffer(20000);
+					int inputBufIndex = mVideoCodecs[si].dequeueInputBuffer(20000);
 					if (inputBufIndex >= 0) {
 
 						ByteBuffer dstBuf = mVideoCodecInputBuffers[si][inputBufIndex];
@@ -245,16 +318,16 @@ public class Player implements Debug {
 							sampleSize = 0;
 						} else {
 							presentationTimeUs = mBuffer.getSampleTime();
-							
+
 							if (mStartTime < 0) {
 								mStartTime = SystemClock.elapsedRealtime();
 							}
 						}
 
-						mVideoCodec[si].queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM
+						mVideoCodecs[si].queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM
 								: 0);
 						if (!sawInputEOS) {
-//							mBuffer.advance();
+							// mBuffer.advance();
 						}
 					}
 
@@ -269,7 +342,7 @@ public class Player implements Debug {
 					// output buffer
 
 					BufferInfo info = new BufferInfo();
-					final int res = mVideoCodec[si].dequeueOutputBuffer(info, 20000);
+					final int res = mVideoCodecs[si].dequeueOutputBuffer(info, 100000);
 					if (res >= 0) {
 						int outputBufIndex = res;
 						ByteBuffer buf = mVideoCodecOutputBuffers[si][outputBufIndex];
@@ -281,15 +354,15 @@ public class Player implements Debug {
 						// if (chunk.length > 0) {
 						// audioTrack.write(chunk, 0, chunk.length);
 						// }
-						mVideoCodec[si].releaseOutputBuffer(outputBufIndex, true /* render */);
+						mVideoCodecs[si].releaseOutputBuffer(outputBufIndex, true /* render */);
 
 						if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
 							sawOutputEOS = true;
 						}
 					} else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-						mVideoCodecOutputBuffers[si] = mVideoCodec[si].getOutputBuffers();
+						mVideoCodecOutputBuffers[si] = mVideoCodecs[si].getOutputBuffers();
 					} else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-						final MediaFormat oformat = mVideoCodec[si].getOutputFormat();
+						final MediaFormat oformat = mVideoCodecs[si].getOutputFormat();
 						Log.d(LOG_TAG, "Output format has changed to " + oformat);
 					}
 
@@ -301,10 +374,41 @@ public class Player implements Debug {
 
 			for (int i = 0; i < mStreams.length; i++) {
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Releasing VideoCodec");
-				mVideoCodec[i].release();
+				mVideoCodecs[i].release();
 			}
 
 		}
+	}
+
+	private class SurfaceHolderCallback implements SurfaceHolder.Callback {
+
+		@Override
+		public void surfaceCreated(SurfaceHolder holder) {
+			
+			mLock.lock();
+			mInitializedSurfaces++;
+			
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface created, total: "+mInitializedSurfaces);
+			
+			mInit.signal();
+			mLock.unlock();
+
+		}
+
+		@Override
+		public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+			
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface changed");
+
+		}
+
+		@Override
+		public void surfaceDestroyed(SurfaceHolder holder) {
+			
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface destroyed");
+
+		}
+
 	}
 
 }

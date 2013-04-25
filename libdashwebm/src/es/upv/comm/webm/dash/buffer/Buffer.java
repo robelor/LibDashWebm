@@ -54,6 +54,8 @@ public class Buffer implements Debug {
 		mAdaptationManager = adaptationManager;
 
 		mFrames = new LinkedBlockingQueue<Frame>();
+		
+		mCurrentFedderStream = mAdaptationManager.getFirstSegmentTrack();
 
 	}
 
@@ -223,6 +225,8 @@ public class Buffer implements Debug {
 					mCurrentFedderStream = next;
 					s = mVideoStreams[next];
 
+					 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to stream: "+next);
+					
 					boolean finished = !s.seekTo(++mCurrentSegment);
 					
 					if(finished){

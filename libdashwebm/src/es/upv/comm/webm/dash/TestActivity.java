@@ -6,11 +6,13 @@ import java.net.URL;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.VideoView;
 
 import com.example.libwebm.R;
@@ -20,7 +22,7 @@ import es.upv.comm.webm.dash.Player.ActionListener;
 public class TestActivity extends Activity {
 
 	private Button mTestButton;
-	private SurfaceView mSurfaceView;
+	private LinearLayout mlLinearLayout;
 
 	private Player p;
 
@@ -32,7 +34,8 @@ public class TestActivity extends Activity {
 		mTestButton = (Button) findViewById(R.id.test_button);
 		mTestButton.setOnClickListener(testOnClick);
 		
-		mSurfaceView = (SurfaceView)findViewById(R.id.videoView1);
+		mlLinearLayout = (LinearLayout)findViewById(R.id.video_layout);
+		
 	}
 
 	@Override
@@ -48,10 +51,11 @@ public class TestActivity extends Activity {
 		public void onClick(View v) {
 			try {
 
-				p = new Player();
-				p.setVideoSurface(mSurfaceView.getHolder().getSurface());
+				p = new Player(getApplicationContext());
 
 				p.setDataSource("http://xolotl.iteam.upv.es/tears_of_steel.xml");
+				
+				
 
 				p.prepareAsync(actionListener);
 				
@@ -66,6 +70,18 @@ public class TestActivity extends Activity {
 
 		@Override
 		public void onSuccess() {
+			
+			
+			mHandler.post(new Runnable() {
+				
+				@Override
+				public void run() {
+					mlLinearLayout.addView(p.getVideoView());
+				}
+			});
+			
+			
+			
 			p.play();
 		}
 
@@ -75,5 +91,8 @@ public class TestActivity extends Activity {
 
 		}
 	};
+	
+	
+	private Handler mHandler = new Handler();
 
 }
