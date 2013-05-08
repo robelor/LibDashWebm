@@ -122,5 +122,17 @@ public class Representation implements Debug {
 	public ByteRange getIndexRange() {
 		return indexByteRange;
 	}
+	
+	public String getWidth() {
+		return width;
+	}
+	
+	public String getHeight() {
+		return height;
+	}
+	
+	public String getBandwidth() {
+		return bandwidth;
+	}
 
 }

@@ -31,8 +31,11 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
+import es.upv.comm.webm.dash.adaptation.JumpyAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 import es.upv.comm.webm.dash.buffer.Buffer;
+import es.upv.comm.webm.dash.buffer.BufferReportListener;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
@@ -51,6 +54,8 @@ public class Player implements Debug {
 	private AdaptationSet mAudioAdaptationSet;
 	private AdaptationSet mVideoAdaptationSet;
 
+	private float mVideoSizeRatio;
+
 	private Stream mAudioSream;
 	private Stream[] mVideoStreams;
 	private int mCurrentVideoStream = -1;
@@ -59,8 +64,7 @@ public class Player implements Debug {
 
 	private Buffer mBuffer;
 
-
-	private LinearLayout mLinearLayout;
+	private VideoLayout mLinearLayout;
 	private SurfaceView[] mSurfaceViews = null;
 
 	private final Lock mLock = new ReentrantLock();
@@ -69,23 +73,29 @@ public class Player implements Debug {
 	private int mInitializedSurfaces;
 
 	public Player(Context context) {
-		mAdaptationManager = new AdaptationManager();
-
-		// mHandler = new Handler(Looper.getMainLooper());
 
 		mContext = context;
 
 	}
 
-	public LinearLayout getVideoView() {
+	public VideoLayout getVideoView() {
 		return mLinearLayout;
+	}
+
+	public float getVideoSizeRatio() {
+		return mVideoSizeRatio;
 	}
 
 	public void setDataSource(String url) throws MalformedURLException {
 
 		mUrl = new URL(url);
 		String baseUrl = mUrl.getProtocol() + "://" + mUrl.getHost() + mUrl.getPath();
-		baseUrl = baseUrl.substring(0, baseUrl.length() - (mUrl.getFile().length() - 1));
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: " + baseUrl);
+
+		// baseUrl = baseUrl.substring(0, baseUrl.length() - (mUrl.getFile().length() - 1));
+		baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/") + 1);
+
 		mBaseUrl = new URL(baseUrl);
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: " + mBaseUrl);
@@ -109,6 +119,13 @@ public class Player implements Debug {
 					mAudioAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Audio);
 					mVideoAdaptationSet = mpd.getAdaptationSet(AdaptationSet.Type.Video);
 
+					// video size ratio
+					int width = Integer.parseInt(mVideoAdaptationSet.getFirstRepresentation().getWidth());
+					int height = Integer.parseInt(mVideoAdaptationSet.getFirstRepresentation().getHeight());
+					float ratio = (float) width / (float) height;
+					mVideoSizeRatio = ratio;
+					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Ratio: " + mVideoSizeRatio);
+
 					// video streams
 					mVideoStreams = new Stream[mVideoAdaptationSet.getRepresentations().size()];
 					int vi = 0;
@@ -118,10 +135,14 @@ public class Player implements Debug {
 						mVideoStreams[vi++] = videoStream;
 					}
 
+					mAdaptationManager = new BufferBasedAdaptationManager(mVideoAdaptationSet);
 					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
+					if (mAdaptationManager instanceof BufferReportListener) {
+						mBuffer.addBufferReportListener((BufferReportListener) mAdaptationManager);
+					}
 
-					mLinearLayout = new LinearLayout(mContext);
-					
+					mLinearLayout = new VideoLayout(mContext);
+
 					mSurfaceViews = new SurfaceView[mVideoStreams.length];
 
 					mSurfaceNumber = mVideoStreams.length;
@@ -130,10 +151,9 @@ public class Player implements Debug {
 					for (int i = 0; i < mSurfaceViews.length; i++) {
 						mSurfaceViews[i] = new SurfaceView(mContext);
 						mSurfaceViews[i].getHolder().addCallback(new SurfaceHolderCallback());
-						
-						LinearLayout.LayoutParams params = new LayoutParams(400,400,1);
-						
-						mLinearLayout.addView(mSurfaceViews[i],params);
+
+						mLinearLayout.addView(mSurfaceViews[i]);
+
 					}
 
 					actionListener.onSuccess();
@@ -156,17 +176,16 @@ public class Player implements Debug {
 		mLock.lock();
 		try {
 			while (mInitializedSurfaces < mSurfaceNumber) {
-				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Initialized surfaces: "+mInitializedSurfaces +", waiting for "+mSurfaceNumber);
-				
+				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Initialized surfaces: " + mInitializedSurfaces + ", waiting for " + mSurfaceNumber);
+
 				mInit.await();
 
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} finally{
-			mLock.unlock();	
+		} finally {
+			mLock.unlock();
 		}
-		
 
 		VideoThread vt = new VideoThread(mVideoStreams, mBuffer);
 		vt.start();
@@ -212,10 +231,12 @@ public class Player implements Debug {
 		private Stream[] mStreams;
 		private Buffer mBuffer;
 
+		private boolean mStreamChanged = false;
+
 		private MediaCodec[] mVideoCodecs;
 		private ByteBuffer[][] mVideoCodecInputBuffers = null;
 		private ByteBuffer[][] mVideoCodecOutputBuffers = null;
-		
+
 		private Handler mHandler;
 
 		public VideoThread(Stream[] videoStreams, Buffer buffer) {
@@ -269,7 +290,7 @@ public class Player implements Debug {
 
 		@Override
 		public void run() {
-			
+
 			Looper.prepare();
 			mHandler = new Handler(Looper.getMainLooper());
 
@@ -287,23 +308,28 @@ public class Player implements Debug {
 				eos = !mBuffer.advance();
 
 				if (!eos) {
-					final int si = mBuffer.getStreamIndex(); 
+					final int si = mBuffer.getStreamIndex();
 
-				
-					
-//					mHandler.post(new Runnable() {
-//						
-//						@Override
-//						public void run() {
-//							for (int i = 0; i < mSurfaceViews.length; i++) {
-//								if(i==si){
-//									mSurfaceViews[i].bringToFront();
-//								}else{
-//									mSurfaceViews[i].setVisibility(View.GONE);
-//								}
-//							}
-//						}
-//					});
+					if (si != mCurrentVideoStream) {
+						mStreamChanged = true;
+						mCurrentVideoStream = si;
+					}
+
+					// mHandler.post(new Runnable() {
+					//
+					// @Override
+					// public void run() {
+					// for (int i = 0; i < mSurfaceViews.length; i++) {
+					// if(i==si){
+					// mSurfaceViews[i].setAlpha(1);
+					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Invisible: "+i);
+					// }else{
+					// mSurfaceViews[i].setAlpha(0);
+					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Visible: "+i);
+					// }
+					// }
+					// }
+					// });
 
 					// input buffer
 					int inputBufIndex = mVideoCodecs[si].dequeueInputBuffer(20000);
@@ -342,7 +368,7 @@ public class Player implements Debug {
 					// output buffer
 
 					BufferInfo info = new BufferInfo();
-					final int res = mVideoCodecs[si].dequeueOutputBuffer(info, 100000);
+					final int res = mVideoCodecs[si].dequeueOutputBuffer(info, 80000);
 					if (res >= 0) {
 						int outputBufIndex = res;
 						ByteBuffer buf = mVideoCodecOutputBuffers[si][outputBufIndex];
@@ -366,6 +392,34 @@ public class Player implements Debug {
 						Log.d(LOG_TAG, "Output format has changed to " + oformat);
 					}
 
+					if (mStreamChanged) {
+						mStreamChanged = false;
+
+						mHandler.postDelayed(new Runnable() {
+
+							@Override
+							public void run() {
+
+								for (int i = 0; i < mSurfaceViews.length; i++) {
+									if (si == i) {
+										mSurfaceViews[i].setY(0);
+									}else{
+										mSurfaceViews[i].setY(1000);
+									}
+								}
+
+//								if (si == 1) {
+//									mSurfaceViews[1].setY(0);
+//									mSurfaceViews[0].setY(1000);
+//								} else {
+//
+//									mSurfaceViews[0].setY(0);
+//									mSurfaceViews[1].setY(1000);
+//								}
+							}
+						}, 80);
+
+					}
 				}
 
 			}
@@ -384,12 +438,12 @@ public class Player implements Debug {
 
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
-			
+
 			mLock.lock();
 			mInitializedSurfaces++;
-			
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface created, total: "+mInitializedSurfaces);
-			
+
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface created, total: " + mInitializedSurfaces);
+
 			mInit.signal();
 			mLock.unlock();
 
@@ -397,14 +451,14 @@ public class Player implements Debug {
 
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-			
+
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface changed");
 
 		}
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-			
+
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Surface destroyed");
 
 		}

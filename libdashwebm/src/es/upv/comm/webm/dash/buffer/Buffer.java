@@ -102,6 +102,10 @@ public class Buffer implements Debug {
 	}
 
 	public void fireBufferReport(BufferReport bufferReport) {
+		
+//		 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer Report: "+bufferReport.toString());
+		
+		
 		for (BufferReportListener listener : mBufferReportListeners) {
 			listener.bufferReport(bufferReport);
 		}

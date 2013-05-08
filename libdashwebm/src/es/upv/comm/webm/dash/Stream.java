@@ -82,7 +82,7 @@ public class Stream implements Debug {
 
 		mCurrentCueIndex = index;
 		if (D)
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "  Cue point: " + mCurrentCueIndex);
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Stream: "+mUrl+"  Cue point: " + mCurrentCueIndex);
 
 		CuePoint curretCuePoint = null;
 		if (mCuePoints.size() > index) {

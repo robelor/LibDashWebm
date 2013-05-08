@@ -1,25 +1,20 @@
 package es.upv.comm.webm.dash;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.VideoView;
-
-import com.example.libwebm.R;
-
+import android.widget.LinearLayout.LayoutParams;
 import es.upv.comm.webm.dash.Player.ActionListener;
 
-public class TestActivity extends Activity {
+public class TestActivity extends Activity implements Debug{
 
 	private Button mTestButton;
 	private LinearLayout mlLinearLayout;
@@ -33,9 +28,9 @@ public class TestActivity extends Activity {
 
 		mTestButton = (Button) findViewById(R.id.test_button);
 		mTestButton.setOnClickListener(testOnClick);
-		
-		mlLinearLayout = (LinearLayout)findViewById(R.id.video_layout);
-		
+
+		mlLinearLayout = (LinearLayout) findViewById(R.id.video_layout);
+
 	}
 
 	@Override
@@ -53,12 +48,10 @@ public class TestActivity extends Activity {
 
 				p = new Player(getApplicationContext());
 
-				p.setDataSource("http://xolotl.iteam.upv.es/tears_of_steel.xml");
-				
-				
+//				p.setDataSource("http://xolotl.iteam.upv.es/tears_of_steel.xml");
+				p.setDataSource("http://172.16.0.100/tos/tos.xml");
 
 				p.prepareAsync(actionListener);
-				
 
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
@@ -70,29 +63,28 @@ public class TestActivity extends Activity {
 
 		@Override
 		public void onSuccess() {
-			
-			
+
 			mHandler.post(new Runnable() {
-				
+
 				@Override
 				public void run() {
-					mlLinearLayout.addView(p.getVideoView());
+
+					int x = mlLinearLayout.getWidth();
+					int y = (int) ((float) x / (float) p.getVideoSizeRatio());
+					LayoutParams lp = new LayoutParams(x, y);
+					mlLinearLayout.addView(p.getVideoView(), lp);
 				}
 			});
-			
-			
-			
+
 			p.play();
 		}
 
 		@Override
 		public void onFailure(int error) {
-			// TODO Auto-generated method stub
 
 		}
 	};
-	
-	
+
 	private Handler mHandler = new Handler();
 
 }

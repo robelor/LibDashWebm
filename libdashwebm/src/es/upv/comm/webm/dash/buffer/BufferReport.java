@@ -21,4 +21,9 @@ public class BufferReport {
 		return usage;
 	}
 
+	@Override
+	public String toString() {
+		return "Size: " + mSize + "  Head time: " + mHeadTime + "  Tail time: " + mTailTime + " Buffer%: " + getBufferUsage();
+	}
+
 }
