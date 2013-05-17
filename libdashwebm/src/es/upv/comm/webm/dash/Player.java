@@ -24,16 +24,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
-import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
-import es.upv.comm.webm.dash.adaptation.JumpyAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
+import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
 import es.upv.comm.webm.dash.buffer.Buffer;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
@@ -64,7 +59,7 @@ public class Player implements Debug {
 
 	private Buffer mBuffer;
 
-	private VideoLayout mLinearLayout;
+	private FrameLayout mFrameLayout;
 	private SurfaceView[] mSurfaceViews = null;
 
 	private final Lock mLock = new ReentrantLock();
@@ -72,14 +67,20 @@ public class Player implements Debug {
 	private int mSurfaceNumber;
 	private int mInitializedSurfaces;
 
+	private PlayerReproductionListener mPlayerReproductionListener;
+	
+	private BufferReportListener mBufferReportListener;
+	
+	private VideoThread mVideoThread;
+
 	public Player(Context context) {
 
 		mContext = context;
 
 	}
 
-	public VideoLayout getVideoView() {
-		return mLinearLayout;
+	public FrameLayout getVideoView() {
+		return mFrameLayout;
 	}
 
 	public float getVideoSizeRatio() {
@@ -100,6 +101,14 @@ public class Player implements Debug {
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: " + mBaseUrl);
 
+	}
+
+	public void setPlayerReproductionListener(PlayerReproductionListener playerReproductionListener) {
+		mPlayerReproductionListener = playerReproductionListener;
+	}
+	
+	public void setBufferReportListener(BufferReportListener bufferReportListener) {
+		mBufferReportListener = bufferReportListener;
 	}
 
 	public void prepareAsync(final ActionListener actionListener) {
@@ -141,7 +150,7 @@ public class Player implements Debug {
 						mBuffer.addBufferReportListener((BufferReportListener) mAdaptationManager);
 					}
 
-					mLinearLayout = new VideoLayout(mContext);
+					mFrameLayout = new FrameLayout(mContext);
 
 					mSurfaceViews = new SurfaceView[mVideoStreams.length];
 
@@ -152,7 +161,7 @@ public class Player implements Debug {
 						mSurfaceViews[i] = new SurfaceView(mContext);
 						mSurfaceViews[i].getHolder().addCallback(new SurfaceHolderCallback());
 
-						mLinearLayout.addView(mSurfaceViews[i]);
+						mFrameLayout.addView(mSurfaceViews[i]);
 
 					}
 
@@ -187,12 +196,12 @@ public class Player implements Debug {
 			mLock.unlock();
 		}
 
-		VideoThread vt = new VideoThread(mVideoStreams, mBuffer);
-		vt.start();
+		mVideoThread = new VideoThread(mVideoStreams, mBuffer);
+		mVideoThread.start();
 
 	}
 
-	public String getXmlFromUrl(URL url) {
+	public String getXmlFromUrl(URL url) throws IOException {
 		String xml = null;
 
 		try {
@@ -206,10 +215,13 @@ public class Player implements Debug {
 
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
+			throw new IOException("Can't get URL");
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
+			throw new IOException("Can't get URL");
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw new IOException("Can't get URL");
 		}
 		// return XML
 		return xml;
@@ -394,6 +406,11 @@ public class Player implements Debug {
 
 					if (mStreamChanged) {
 						mStreamChanged = false;
+						
+						if(mPlayerReproductionListener!=null){
+							Representation r = mVideoAdaptationSet.getRepresentations().get(si);
+							mPlayerReproductionListener.playerQualityChange(Integer.parseInt(r.getWidth()), Integer.parseInt(r.getHeight()));
+						}
 
 						mHandler.postDelayed(new Runnable() {
 
@@ -403,23 +420,26 @@ public class Player implements Debug {
 								for (int i = 0; i < mSurfaceViews.length; i++) {
 									if (si == i) {
 										mSurfaceViews[i].setY(0);
-									}else{
+									} else {
 										mSurfaceViews[i].setY(1000);
 									}
 								}
 
-//								if (si == 1) {
-//									mSurfaceViews[1].setY(0);
-//									mSurfaceViews[0].setY(1000);
-//								} else {
-//
-//									mSurfaceViews[0].setY(0);
-//									mSurfaceViews[1].setY(1000);
-//								}
+								// if (si == 1) {
+								// mSurfaceViews[1].setY(0);
+								// mSurfaceViews[0].setY(1000);
+								// } else {
+								//
+								// mSurfaceViews[0].setY(0);
+								// mSurfaceViews[1].setY(1000);
+								// }
 							}
 						}, 80);
 
 					}
+
+					if (mPlayerReproductionListener != null)
+						mPlayerReproductionListener.playerReproductionTime((int) presentationTimeUs);
 				}
 
 			}
@@ -463,6 +483,13 @@ public class Player implements Debug {
 
 		}
 
+	}
+
+	public void close() {
+		if(mVideoThread!=null){
+			mVideoThread.stop();
+		}
+		
 	}
 
 }

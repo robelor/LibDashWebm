@@ -26,6 +26,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="es.upv.comm.webm.dash.PlayerActivity"
+            android:label="@string/title_activity_player" >
+        </activity>
     </application>
 
 </manifest>
