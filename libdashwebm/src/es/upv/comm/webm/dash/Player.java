@@ -28,9 +28,12 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
+import es.upv.comm.webm.dash.adaptation.BasicBufferBasedAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
+import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager2;
 import es.upv.comm.webm.dash.buffer.Buffer;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
+import es.upv.comm.webm.dash.http.NetworkSpeedListener;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
@@ -68,8 +71,8 @@ public class Player implements Debug {
 	private int mInitializedSurfaces;
 
 	private PlayerReproductionListener mPlayerReproductionListener;
-	
 	private BufferReportListener mBufferReportListener;
+	private NetworkSpeedListener mNetworkSpeedListener;
 	
 	private VideoThread mVideoThread;
 
@@ -110,6 +113,10 @@ public class Player implements Debug {
 	public void setBufferReportListener(BufferReportListener bufferReportListener) {
 		mBufferReportListener = bufferReportListener;
 	}
+	
+	public void setmNetworkSpeedListener(NetworkSpeedListener networkSpeedListener) {
+		mNetworkSpeedListener = networkSpeedListener;
+	}
 
 	public void prepareAsync(final ActionListener actionListener) {
 
@@ -144,10 +151,18 @@ public class Player implements Debug {
 						mVideoStreams[vi++] = videoStream;
 					}
 
-					mAdaptationManager = new BufferBasedAdaptationManager(mVideoAdaptationSet);
+					mAdaptationManager = new BasicBufferBasedAdaptationManager(mVideoAdaptationSet);
 					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
 					if (mAdaptationManager instanceof BufferReportListener) {
 						mBuffer.addBufferReportListener((BufferReportListener) mAdaptationManager);
+					}
+					if(mBufferReportListener!=null){
+						mBuffer.addBufferReportListener(mBufferReportListener);
+					}
+					if(mNetworkSpeedListener!=null){
+						for (int i = 0; i < mVideoStreams.length; i++) {
+							mVideoStreams[i].addNetwordSpeedListener(mNetworkSpeedListener);
+						}
 					}
 
 					mFrameLayout = new FrameLayout(mContext);
@@ -239,6 +254,7 @@ public class Player implements Debug {
 		private Thread mVideoThread;
 
 		private long mStartTime = -1;
+		private long mDelayTime = 0;
 
 		private Stream[] mStreams;
 		private Buffer mBuffer;
@@ -317,7 +333,11 @@ public class Player implements Debug {
 
 				long presentationTimeUs = -1;
 
+				long l1, l2 ;
+				l1 = SystemClock.elapsedRealtime();
 				eos = !mBuffer.advance();
+				l2 = SystemClock.elapsedRealtime();
+				
 
 				if (!eos) {
 					final int si = mBuffer.getStreamIndex();
@@ -326,22 +346,6 @@ public class Player implements Debug {
 						mStreamChanged = true;
 						mCurrentVideoStream = si;
 					}
-
-					// mHandler.post(new Runnable() {
-					//
-					// @Override
-					// public void run() {
-					// for (int i = 0; i < mSurfaceViews.length; i++) {
-					// if(i==si){
-					// mSurfaceViews[i].setAlpha(1);
-					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Invisible: "+i);
-					// }else{
-					// mSurfaceViews[i].setAlpha(0);
-					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Visible: "+i);
-					// }
-					// }
-					// }
-					// });
 
 					// input buffer
 					int inputBufIndex = mVideoCodecs[si].dequeueInputBuffer(20000);
@@ -359,6 +363,11 @@ public class Player implements Debug {
 
 							if (mStartTime < 0) {
 								mStartTime = SystemClock.elapsedRealtime();
+							}else{
+								if((l2 - l1) > 10){
+									mStartTime = SystemClock.elapsedRealtime();
+									mDelayTime = presentationTimeUs;
+								}
 							}
 						}
 
@@ -369,7 +378,7 @@ public class Player implements Debug {
 						}
 					}
 
-					while ((SystemClock.elapsedRealtime() - mStartTime) < presentationTimeUs) {
+					while ((SystemClock.elapsedRealtime() - mStartTime) < (presentationTimeUs -mDelayTime)) {
 						try {
 							Thread.sleep(1);
 						} catch (InterruptedException e) {
@@ -488,6 +497,9 @@ public class Player implements Debug {
 	public void close() {
 		if(mVideoThread!=null){
 			mVideoThread.stop();
+		}
+		if(mBuffer!=null){
+			mBuffer.stop();
 		}
 		
 	}

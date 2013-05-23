@@ -2,6 +2,7 @@ package es.upv.comm.webm.dash.buffer;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,10 +36,11 @@ public class Buffer implements Debug {
 
 	private int mCurrentFedderStream = 0;
 
-	private int mCurrentSegment = -1;;
+	private int mCurrentSegment = -1;
 	private Frame mCurrentFrame;
 
 	private HashSet<BufferReportListener> mBufferReportListeners = new HashSet<BufferReportListener>();
+	
 
 	private AdaptationManager mAdaptationManager;
 
@@ -75,6 +77,10 @@ public class Buffer implements Debug {
 		if (mBufferFedder != null) {
 			mBufferFedder.stop();
 		}
+		if(mReportTimer!=null){
+			mReportTimer.cancel();
+			mReportTimer = null;
+		}
 	}
 
 	public int getSize() {
@@ -110,7 +116,7 @@ public class Buffer implements Debug {
 			listener.bufferReport(bufferReport);
 		}
 	}
-
+	
 	public boolean advance() {
 
 		try {

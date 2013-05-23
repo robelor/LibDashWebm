@@ -38,13 +38,13 @@ public class Container implements Debug {
 
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "  Init, URL:" + mContainerUrl+" "+mRepresentation.getInitRange());
-		isds = new InputStreamDataSource(new ByteArrayInputStream(HttpUtils.readUrlRange(mContainerUrl, mRepresentation.getInitRange())));
+		isds = new InputStreamDataSource(new ByteArrayInputStream(HttpUtils.readUrlRange(mContainerUrl, mRepresentation.getInitRange()).getBuffer()));
 		parseInitialization(isds);
 		
 		
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "  Index, URL:" + mContainerUrl+" "+mRepresentation.getIndexRange());
-		isds = new InputStreamDataSource(new ByteArrayInputStream(HttpUtils.readUrlRange(mContainerUrl, mRepresentation.getIndexRange())));
+		isds = new InputStreamDataSource(new ByteArrayInputStream(HttpUtils.readUrlRange(mContainerUrl, mRepresentation.getIndexRange()).getBuffer()));
 		parseIndex(isds);
 		
 	}

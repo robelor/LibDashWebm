@@ -3,6 +3,9 @@ package es.upv.comm.webm.dash;
 import java.net.MalformedURLException;
 
 import es.upv.comm.webm.dash.Player.ActionListener;
+import es.upv.comm.webm.dash.buffer.BufferReport;
+import es.upv.comm.webm.dash.buffer.BufferReportListener;
+import es.upv.comm.webm.dash.http.NetworkSpeedListener;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,7 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.LinearLayout.LayoutParams;
 
-public class PlayerActivity extends Activity implements Debug, PlayerReproductionListener {
+public class PlayerActivity extends Activity implements Debug, PlayerReproductionListener, BufferReportListener, NetworkSpeedListener {
 
 	public static final String URL_EXTRA = "libwebm_dash_url_extra";
 
@@ -27,6 +30,7 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 	private TextView mTimeTextView;
 	private TextView mSizeView;
 	private TextView mBufferFill;
+	private TextView mSpeed;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +45,9 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 		mlLinearLayout = (LinearLayout) findViewById(R.id.video_layout);
 		mTimeTextView = (TextView) findViewById(R.id.timeView);
 		mSizeView = (TextView) findViewById(R.id.sizeView);
-		mBufferFill = (TextView)findViewById(R.id.bufferFillView);
+		mBufferFill = (TextView) findViewById(R.id.bufferFillView);
+		mSpeed = (TextView)findViewById(R.id.SpeedView);
+		
 
 		Intent i = getIntent();
 		mUrl = i.getStringExtra(URL_EXTRA);
@@ -57,6 +63,8 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 
 		mPlayer = new Player(getApplicationContext());
 		mPlayer.setPlayerReproductionListener(this);
+		mPlayer.setBufferReportListener(this);
+		mPlayer.setmNetworkSpeedListener(this);
 		try {
 			mPlayer.setDataSource(mUrl);
 			mPlayer.prepareAsync(actionListener);
@@ -120,7 +128,27 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 				mSizeView.setText(x + "x" + y);
 			}
 		});
+	}
 
+	@Override
+	public void bufferReport(final BufferReport bufferReport) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				mBufferFill.setText(bufferReport.getBufferUsage() + "");
+			}
+		});
+	}
+
+	@Override
+	public void networkSpeed(final float speed) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				mSpeed.setText(speed + "");
+			}
+		});
+		
 	}
 
 }

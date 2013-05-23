@@ -26,7 +26,7 @@ public class HttpUtils implements Debug {
 		return null;
 	}
 
-	public static byte[] readUrlRange(URL url, ByteRange range) throws IOException {
+	public static UrlRangeDownload readUrlRange(URL url, ByteRange range) throws IOException {
 		HttpURLConnection connection = null;
 		BufferedInputStream bis = null;
 		byte[] buffer = null;
@@ -46,6 +46,8 @@ public class HttpUtils implements Debug {
 
 			bis = new BufferedInputStream(connection.getInputStream());
 
+			float speed = -1;
+			
 			while (readed < buffSize && !endReached) {
 
 				int thisRead = bis.read(buffer, readed, buffSize - readed);
@@ -61,12 +63,15 @@ public class HttpUtils implements Debug {
 
 			long ms = t2 - t1;
 
-			float speed = (float) readed / ((float) ms / (float) 1000l);
+			 speed = (float) readed / ((float) ms / (float) 1000l);
 
 			if (D)
 				Log.d(LOG_TAG, HttpUtils.class.getSimpleName() + ": " + "Readed " + readed + " Bytes in " + ms + " ms  at " + speed + " Bytes/second");
 
-			return buffer;
+			
+			UrlRangeDownload download = new UrlRangeDownload(buffer, speed); 
+			
+			return download;
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new IOException("Error reading URL range");
@@ -81,5 +86,6 @@ public class HttpUtils implements Debug {
 		}
 
 	}
+	
 
 }

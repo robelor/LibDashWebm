@@ -3,13 +3,15 @@ package es.upv.comm.webm.dash.adaptation;
 import java.util.ArrayList;
 
 import android.os.SystemClock;
+import android.util.Log;
 
+import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.buffer.BufferReport;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
 import es.upv.comm.webm.dash.mpd.Representation;
 
-public class BufferBasedAdaptationManager implements AdaptationManager, BufferReportListener {
+public class BufferBasedAdaptationManager implements Debug, AdaptationManager, BufferReportListener {
 
 	private static final int MIN_TRANSITION_INTERVAL = 4000;
 
@@ -40,11 +42,13 @@ public class BufferBasedAdaptationManager implements AdaptationManager, BufferRe
 	public void bufferReport(BufferReport bufferReport) {
 		long now = SystemClock.elapsedRealtime();
 		if (bufferReport.getBufferUsage() < 66) {
-			if (now - mLastRepresentationChangeTime > MIN_TRANSITION_INTERVAL) {
+			if ((now - mLastRepresentationChangeTime) > MIN_TRANSITION_INTERVAL) {
+				mLastRepresentationChangeTime = SystemClock.elapsedRealtime();
 				goWorse();
 			}
 		}else{
-			if (now - mLastRepresentationChangeTime > MIN_TRANSITION_INTERVAL) {
+			if ((now - mLastRepresentationChangeTime) > MIN_TRANSITION_INTERVAL) {
+				mLastRepresentationChangeTime = SystemClock.elapsedRealtime();
 				goBetter();
 			}
 		}
@@ -52,13 +56,23 @@ public class BufferBasedAdaptationManager implements AdaptationManager, BufferRe
 	}
 
 	private void goWorse() {
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "goWorse()");
 		if (mCurrentRepresentation > 0)
 			mCurrentRepresentation--;
+		
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Current representation: "+mCurrentRepresentation);
 	}
 
 	private void goBetter() {
-		if (mCurrentRepresentation < mRepresentations.size() - 2)
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "goBetter()");
+		if (mCurrentRepresentation <= (mRepresentations.size() - 2))
 			mCurrentRepresentation++;
+		
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Current representation: "+mCurrentRepresentation);
 
 	}
 
