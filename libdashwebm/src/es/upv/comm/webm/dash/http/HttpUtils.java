@@ -13,17 +13,13 @@ import es.upv.comm.webm.dash.Debug;
 
 public class HttpUtils implements Debug {
 
-	public static InputStream getUrlRangeInputStream(URL url, ByteRange byteRange) {
+	public static InputStream getUrlRangeInputStream(URL url, ByteRange byteRange) throws IOException {
 		HttpURLConnection connection = null;
-		try {
 			connection = (HttpURLConnection) url.openConnection();
 			String rangeProperty = byteRange.getRangeProperty();
 			connection.addRequestProperty("range", rangeProperty);
 			return new BufferedInputStream(connection.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
+		
 	}
 
 	public static UrlRangeDownload readUrlRange(URL url, ByteRange range) throws IOException {

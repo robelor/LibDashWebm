@@ -54,8 +54,20 @@ public class Element {
   public void readData(DataSource source) {
     //Setup a buffer for it's data
     this.data = new byte[(int)size];
-    //Read the data
-    source.read(this.data, 0, this.data.length);
+    
+    
+//		// Read the data
+//		source.read(this.data, 0, this.data.length);
+    
+    
+		// Read the rest of the size.
+		int readSize = (int)size;
+		int readed = 0;
+		while (readed < readSize) {
+			readed += source.read(data, readed, readSize - readed);
+		}
+    
+    
     dataRead = true;
   }
 

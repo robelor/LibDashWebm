@@ -31,6 +31,7 @@ import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 import es.upv.comm.webm.dash.adaptation.BasicBufferBasedAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager2;
+import es.upv.comm.webm.dash.adaptation.BufferNetworkBasedAdaptationManager;
 import es.upv.comm.webm.dash.buffer.Buffer;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
 import es.upv.comm.webm.dash.http.NetworkSpeedListener;
@@ -73,8 +74,13 @@ public class Player implements Debug {
 	private PlayerReproductionListener mPlayerReproductionListener;
 	private BufferReportListener mBufferReportListener;
 	private NetworkSpeedListener mNetworkSpeedListener;
-	
+
 	private VideoThread mVideoThread;
+	
+	private Stats mStats;
+	
+	private PresentationTimeListener mPresentationTimeListener;
+	private PresentationQualityListener mPresentationQualityListener;
 
 	public Player(Context context) {
 
@@ -109,11 +115,11 @@ public class Player implements Debug {
 	public void setPlayerReproductionListener(PlayerReproductionListener playerReproductionListener) {
 		mPlayerReproductionListener = playerReproductionListener;
 	}
-	
+
 	public void setBufferReportListener(BufferReportListener bufferReportListener) {
 		mBufferReportListener = bufferReportListener;
 	}
-	
+
 	public void setmNetworkSpeedListener(NetworkSpeedListener networkSpeedListener) {
 		mNetworkSpeedListener = networkSpeedListener;
 	}
@@ -146,24 +152,41 @@ public class Player implements Debug {
 					mVideoStreams = new Stream[mVideoAdaptationSet.getRepresentations().size()];
 					int vi = 0;
 					for (Representation representation : mVideoAdaptationSet.getRepresentations()) {
-						Stream videoStream = new Stream(representation, mBaseUrl);
+						Stream videoStream = new Stream(vi,representation, mBaseUrl);
 
 						mVideoStreams[vi++] = videoStream;
 					}
 
-					mAdaptationManager = new BasicBufferBasedAdaptationManager(mVideoAdaptationSet);
+					mAdaptationManager = new BufferNetworkBasedAdaptationManager(mVideoAdaptationSet, mVideoStreams);
 					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
+
 					if (mAdaptationManager instanceof BufferReportListener) {
 						mBuffer.addBufferReportListener((BufferReportListener) mAdaptationManager);
 					}
-					if(mBufferReportListener!=null){
+					if (mAdaptationManager instanceof NetworkSpeedListener) {
+						for (int i = 0; i < mVideoStreams.length; i++) {
+							mVideoStreams[i].addNetwordSpeedListener((NetworkSpeedListener) mAdaptationManager);
+						}
+					}
+
+					if (mBufferReportListener != null) {
 						mBuffer.addBufferReportListener(mBufferReportListener);
 					}
-					if(mNetworkSpeedListener!=null){
+					if (mNetworkSpeedListener != null) {
 						for (int i = 0; i < mVideoStreams.length; i++) {
 							mVideoStreams[i].addNetwordSpeedListener(mNetworkSpeedListener);
 						}
 					}
+					
+					//
+					mStats = new Stats(mContext);
+					mBuffer.addBufferReportListener(mStats);
+					mPresentationTimeListener = mStats;
+					mPresentationQualityListener =  mStats;
+					for (int i = 0; i < mVideoStreams.length; i++) {
+						mVideoStreams[i].addNetwordSpeedListener(mStats);
+					}
+					//
 
 					mFrameLayout = new FrameLayout(mContext);
 
@@ -333,11 +356,10 @@ public class Player implements Debug {
 
 				long presentationTimeUs = -1;
 
-				long l1, l2 ;
+				long l1, l2;
 				l1 = SystemClock.elapsedRealtime();
 				eos = !mBuffer.advance();
 				l2 = SystemClock.elapsedRealtime();
-				
 
 				if (!eos) {
 					final int si = mBuffer.getStreamIndex();
@@ -360,11 +382,17 @@ public class Player implements Debug {
 							sampleSize = 0;
 						} else {
 							presentationTimeUs = mBuffer.getSampleTime();
+							if(mPresentationTimeListener!=null){
+								mPresentationTimeListener.presentationTime((int)presentationTimeUs);
+							}
+							if(mPresentationQualityListener!=null){
+								mPresentationQualityListener.presentationQuality(mCurrentVideoStream);
+							}
 
 							if (mStartTime < 0) {
 								mStartTime = SystemClock.elapsedRealtime();
-							}else{
-								if((l2 - l1) > 10){
+							} else {
+								if ((l2 - l1) > 10) {
 									mStartTime = SystemClock.elapsedRealtime();
 									mDelayTime = presentationTimeUs;
 								}
@@ -378,7 +406,7 @@ public class Player implements Debug {
 						}
 					}
 
-					while ((SystemClock.elapsedRealtime() - mStartTime) < (presentationTimeUs -mDelayTime)) {
+					while ((SystemClock.elapsedRealtime() - mStartTime) < (presentationTimeUs - mDelayTime)) {
 						try {
 							Thread.sleep(1);
 						} catch (InterruptedException e) {
@@ -415,8 +443,8 @@ public class Player implements Debug {
 
 					if (mStreamChanged) {
 						mStreamChanged = false;
-						
-						if(mPlayerReproductionListener!=null){
+
+						if (mPlayerReproductionListener != null) {
 							Representation r = mVideoAdaptationSet.getRepresentations().get(si);
 							mPlayerReproductionListener.playerQualityChange(Integer.parseInt(r.getWidth()), Integer.parseInt(r.getHeight()));
 						}
@@ -454,6 +482,7 @@ public class Player implements Debug {
 			}
 
 			// close
+			mStats.close();
 
 			for (int i = 0; i < mStreams.length; i++) {
 				Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Releasing VideoCodec");
@@ -495,13 +524,13 @@ public class Player implements Debug {
 	}
 
 	public void close() {
-		if(mVideoThread!=null){
+		if (mVideoThread != null) {
 			mVideoThread.stop();
 		}
-		if(mBuffer!=null){
+		if (mBuffer != null) {
 			mBuffer.stop();
 		}
-		
+
 	}
 
 }

@@ -163,8 +163,17 @@ public class EBMLReader {
 	    data[0] = (byte)(firstByte & ((0xFF >>> (numBytes))));
 
 	    if (numBytes > 1) {
-	      //Read the rest of the size.
-	      source.read(data, 1, numBytes - 1);
+//			// Read the rest of the size.
+//			source.read(data, 1, numBytes - 1);
+
+			// Read the rest of the size.
+			int readSize = numBytes - 1;
+			int readed = 0;
+			while (readed < readSize) {
+				readed += source.read(data, 1 + readed, readSize - readed);
+			}
+	    	
+	      
 	    }
 
 	    return data;
@@ -205,8 +214,15 @@ public class EBMLReader {
     data[0] = (byte)(firstByte & ((0xFF >>> (numBytes))));
 
     if (numBytes > 1) {
-      //Read the rest of the size.
-      source.read(data, 1, numBytes - 1);
+//			// Read the rest of the size.
+//			source.read(data, 1, numBytes - 1);
+      
+			// Read the rest of the size.
+			int readSize = numBytes - 1;
+			int readed = 0;
+			while (readed < readSize) {
+				readed += source.read(data, 1 + readed, readSize - readed);
+			}
     }
 
     //Put this into a long
@@ -417,8 +433,15 @@ public class EBMLReader {
     data[0] = (byte)(firstByte & ((0xFF >>> (numBytes))));
 
     if (numBytes > 1) {
-      //Read the rest of the size.
-      source.read(data, 1, numBytes - 1);
+//			// Read the rest of the size.
+//			source.read(data, 1, numBytes - 1);
+    	
+			// Read the rest of the size.
+			int readSize = numBytes - 1;
+			int readed = 0;
+			while (readed < readSize) {
+				readed += source.read(data, 1 + readed, readSize - readed);
+			}
     }
 
     //Put this into a long
@@ -478,8 +501,15 @@ public class EBMLReader {
     data[0] = (byte)((firstByte));// & ((0xFF >>> (numBytes))));
 
     if (numBytes > 1) {
-      //Read the rest of the size.
-      source.read(data, 1, numBytes - 1);
+//			// Read the rest of the size.
+//			source.read(data, 1, numBytes - 1);
+      
+			// Read the rest of the size.
+			int readSize = numBytes - 1;
+			int readed = 0;
+			while (readed < readSize) {
+				readed += source.read(data, 1 + readed, readSize - readed);
+			}
     }
     return data;
   }

@@ -2,6 +2,6 @@ package es.upv.comm.webm.dash.http;
 
 public interface NetworkSpeedListener {
 	
-	public void networkSpeed(float speed);
+	public void networkSpeed(int streamIndex, int index, float speed);
 
 }

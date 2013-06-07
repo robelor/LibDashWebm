@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import org.ebml.io.HttpInputStreamDataSource;
 import org.ebml.io.InputStreamDataSource;
 import org.ebml.matroska.MatroskaBlock;
 
@@ -26,6 +27,7 @@ public class Stream implements Debug {
 	private static final String MIME_VIDEO = "video/x-vnd.on2.vp8";
 	private static final String MIME_AUDIO = "audio/vorbis";
 
+	private int mStreamIndex;
 	private Representation mRepresentation;
 	private URL mUrl;
 
@@ -41,10 +43,11 @@ public class Stream implements Debug {
 	
 	private HashSet<NetworkSpeedListener> mNetworkSpeedListeners = new HashSet<NetworkSpeedListener>();
 
-	public Stream(Representation representation, URL baseUrl) throws IOException {
+	public Stream(int streamIndex, Representation representation, URL baseUrl) throws IOException {
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Creating Stream...");
 
+		mStreamIndex = streamIndex;
 		mRepresentation = representation;
 		mUrl = new URL(baseUrl + representation.getBaseUrl());
 
@@ -66,9 +69,9 @@ public class Stream implements Debug {
 		return mNetworkSpeedListeners.remove(listener);
 	}
 
-	public void fireNetworkSpeed(float speed){
+	public void fireNetworkSpeed(int index,float speed){
 		for (NetworkSpeedListener listener : mNetworkSpeedListeners) {
-			listener.networkSpeed(speed);
+			listener.networkSpeed(mStreamIndex, index, speed);
 		}
 	}
 
@@ -112,11 +115,14 @@ public class Stream implements Debug {
 
 		try {
 
-			UrlRangeDownload download = HttpUtils.readUrlRange(mUrl, mCurrentByteRange);
-			mCurrentCluster = new Cluster(new InputStreamDataSource(new ByteArrayInputStream(download.getBuffer())));
-			mCurrentSpeed = download.getSpeed();
+//			UrlRangeDownload download = HttpUtils.readUrlRange(mUrl, mCurrentByteRange);
+//			mCurrentCluster = new Cluster(new InputStreamDataSource(new ByteArrayInputStream(download.getBuffer())));
 			
-			fireNetworkSpeed(mCurrentSpeed);
+//			mCurrentSpeed = download.getSpeed();
+			
+			mCurrentCluster = new Cluster(new HttpInputStreamDataSource(HttpUtils.getUrlRangeInputStream(mUrl, mCurrentByteRange)));
+			
+			fireNetworkSpeed(index, mCurrentSpeed);
 			
 			return true;
 		} catch (IOException e) {
@@ -167,6 +173,16 @@ public class Stream implements Debug {
 
 	public MatroskaBlock getCurrentBlock() {
 		return mCurrentBlock;
+	}
+	
+	public Representation getRepresentation() {
+		return mRepresentation;
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return mUrl.toString();
 	}
 
 }

@@ -3,6 +3,8 @@ package es.upv.comm.webm.dash;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -18,6 +20,22 @@ public class TestActivity extends Activity implements Debug {
 
 		mTestButton = (Button) findViewById(R.id.test_button);
 		mTestButton.setOnClickListener(testOnClick);
+	}
+	
+	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		super.onStop();
+		
+		
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+	    	System.exit(0);
+	    }
+	    return super.onKeyDown(keyCode, event);
 	}
 
 	private OnClickListener testOnClick = new OnClickListener() {

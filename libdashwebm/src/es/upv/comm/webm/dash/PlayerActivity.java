@@ -141,7 +141,7 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 	}
 
 	@Override
-	public void networkSpeed(final float speed) {
+	public void networkSpeed(int streamIndex, int index, final float speed) {
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
