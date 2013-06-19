@@ -1,4 +1,4 @@
-package es.upv.comm.webm.dash.http;
+	package es.upv.comm.webm.dash.http;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -10,10 +10,40 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import es.upv.comm.webm.dash.Debug;
+import es.upv.comm.webm.dash.Stream;
 
 public class HttpUtils implements Debug {
 
-	public static InputStream getUrlRangeInputStream(URL url, ByteRange byteRange) throws IOException {
+	public static InputStream getSyncUrlRangeInputStream(URL url, ByteRange byteRange, int index, NetworkSpeedListener networkSpeedListener)  throws IOException {
+		
+		if (D)
+			Log.d(LOG_TAG, HttpUtils.class.getSimpleName() + ": " + "SyncUrlRangeInputStream: " + url + " range: " + byteRange.toString());
+
+		HttpURLConnection connection = null;
+			connection = (HttpURLConnection) url.openConnection();
+			String rangeProperty = byteRange.getRangeProperty();
+			connection.addRequestProperty("range", rangeProperty);
+			
+			return connection.getInputStream(); 
+	}
+	
+	public static InputStream getAsyncUrlRangeInputStream(URL url, ByteRange byteRange, int index, NetworkSpeedListener networkSpeedListener)  throws IOException {
+		
+		if (D)
+			Log.d(LOG_TAG, HttpUtils.class.getSimpleName() + ": " + "AsyncUrlRangeInputStream: " + url + " range: " + byteRange.toString());
+		
+		HttpURLConnection connection = null;
+			connection = (HttpURLConnection) url.openConnection();
+			String rangeProperty = byteRange.getRangeProperty();
+			connection.addRequestProperty("range", rangeProperty);
+			
+			AsyncInputStream ais = new AsyncInputStream(connection.getInputStream(), byteRange.getRangeSize(), index, networkSpeedListener);
+			ais.start();
+			return ais; 
+	}
+	
+	
+	public static InputStream getAsyncUrlRangeInputStream(URL url, ByteRange byteRange) throws IOException {
 		HttpURLConnection connection = null;
 			connection = (HttpURLConnection) url.openConnection();
 			String rangeProperty = byteRange.getRangeProperty();
@@ -82,6 +112,8 @@ public class HttpUtils implements Debug {
 		}
 
 	}
+	
+	
 	
 
 }

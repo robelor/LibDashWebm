@@ -22,8 +22,16 @@ import android.widget.LinearLayout.LayoutParams;
 public class PlayerActivity extends Activity implements Debug, PlayerReproductionListener, BufferReportListener, NetworkSpeedListener {
 
 	public static final String URL_EXTRA = "libwebm_dash_url_extra";
+	public static final String BUFFER_SIZE = "libwebm_dash_buffer_size";
+	public static final String BUFFER_MIN_SIZE = "libwebm_dash_buffer_min_size";
+	public static final String BUFFER_TYPE = "libwebm_dash_buffer_type";
+	public static final String ALG = "libwebm_dash_alg";
 
 	private String mUrl;
+	private int mBufferSize;
+	private int mMinBufferSize;
+	private int mBufferType;
+	private int mAlg;
 	private Player mPlayer;
 
 	private LinearLayout mlLinearLayout;
@@ -51,6 +59,17 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 
 		Intent i = getIntent();
 		mUrl = i.getStringExtra(URL_EXTRA);
+		mBufferSize = i.getIntExtra(BUFFER_SIZE, 10000);
+		mMinBufferSize = i.getIntExtra(BUFFER_MIN_SIZE, 5000);
+		mBufferType = i.getIntExtra(BUFFER_TYPE, Player.BUFFER_SYNC);
+		mAlg = i.getIntExtra(ALG, Player.ALG_LOWER_BITRATE);
+
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video URL: " + mUrl);
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Buffer Type: " + mBufferType);
+		if (D)
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video Adaptation Alg: " + mAlg);
 
 	}
 
@@ -58,8 +77,7 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 	protected void onResume() {
 		super.onResume();
 
-		if (D)
-			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Video URL: " + mUrl);
+		
 
 		mPlayer = new Player(getApplicationContext());
 		mPlayer.setPlayerReproductionListener(this);
@@ -67,6 +85,10 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 		mPlayer.setmNetworkSpeedListener(this);
 		try {
 			mPlayer.setDataSource(mUrl);
+			mPlayer.setBufferSize(mBufferSize);
+			mPlayer.setMinBufferSize(mMinBufferSize);
+			mPlayer.setBufferType(mBufferType);
+			mPlayer.setAdaptationAlg(mAlg);
 			mPlayer.prepareAsync(actionListener);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -145,6 +167,8 @@ public class PlayerActivity extends Activity implements Debug, PlayerReproductio
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
+				
+				
 				mSpeed.setText(speed + "");
 			}
 		});

@@ -22,7 +22,7 @@ import es.upv.comm.webm.dash.http.NetworkSpeedListener;
 import es.upv.comm.webm.dash.http.UrlRangeDownload;
 import es.upv.comm.webm.dash.mpd.Representation;
 
-public class Stream implements Debug {
+public class Stream implements Debug, NetworkSpeedListener {
 
 	private static final String MIME_VIDEO = "video/x-vnd.on2.vp8";
 	private static final String MIME_AUDIO = "audio/vorbis";
@@ -40,7 +40,7 @@ public class Stream implements Debug {
 	private float mCurrentSpeed;
 
 	private MatroskaBlock mCurrentBlock;
-	
+
 	private HashSet<NetworkSpeedListener> mNetworkSpeedListeners = new HashSet<NetworkSpeedListener>();
 
 	public Stream(int streamIndex, Representation representation, URL baseUrl) throws IOException {
@@ -60,22 +60,28 @@ public class Stream implements Debug {
 	public URL getStreamUrl() {
 		return mUrl;
 	}
-	
-	public boolean addNetwordSpeedListener(NetworkSpeedListener listener){
+
+	public boolean addNetwordSpeedListener(NetworkSpeedListener listener) {
 		return mNetworkSpeedListeners.add(listener);
 	}
-	
-	public boolean removeNetworkSpeedListener(NetworkSpeedListener listener){
+
+	public boolean removeNetworkSpeedListener(NetworkSpeedListener listener) {
 		return mNetworkSpeedListeners.remove(listener);
 	}
 
-	public void fireNetworkSpeed(int index,float speed){
+	public void fireNetworkSpeed(int index, float speed) {
 		for (NetworkSpeedListener listener : mNetworkSpeedListeners) {
 			listener.networkSpeed(mStreamIndex, index, speed);
 		}
 	}
 
-	public boolean seekTo(int index) {
+	@Override
+	public void networkSpeed(int streamIndex, int index, float speed) {
+		fireNetworkSpeed(index, speed);
+
+	}
+
+	public boolean seekTo(int index, int bufferType) {
 		// if (D)
 		// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to cue: " + index);
 
@@ -115,15 +121,24 @@ public class Stream implements Debug {
 
 		try {
 
-//			UrlRangeDownload download = HttpUtils.readUrlRange(mUrl, mCurrentByteRange);
-//			mCurrentCluster = new Cluster(new InputStreamDataSource(new ByteArrayInputStream(download.getBuffer())));
+			switch (bufferType) {
+			case Player.BUFFER_SYNC:
+				mCurrentCluster = new Cluster(new HttpInputStreamDataSource(HttpUtils.getSyncUrlRangeInputStream(mUrl, mCurrentByteRange, index, this)));
+				break;
+			case Player.BUFFER_ASYNC:
+				mCurrentCluster = new Cluster(new HttpInputStreamDataSource(HttpUtils.getAsyncUrlRangeInputStream(mUrl, mCurrentByteRange, index, this)));
+				break;
+			}
+
+			// UrlRangeDownload download = HttpUtils.readUrlRange(mUrl, mCurrentByteRange);
+			// mCurrentCluster = new Cluster(new InputStreamDataSource(new ByteArrayInputStream(download.getBuffer())));
+			//
+			// mCurrentSpeed = download.getSpeed();
+
 			
-//			mCurrentSpeed = download.getSpeed();
-			
-			mCurrentCluster = new Cluster(new HttpInputStreamDataSource(HttpUtils.getUrlRangeInputStream(mUrl, mCurrentByteRange)));
-			
-			fireNetworkSpeed(index, mCurrentSpeed);
-			
+
+			// fireNetworkSpeed(index, mCurrentSpeed);
+
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -174,11 +189,11 @@ public class Stream implements Debug {
 	public MatroskaBlock getCurrentBlock() {
 		return mCurrentBlock;
 	}
-	
+
 	public Representation getRepresentation() {
 		return mRepresentation;
 	}
-	
+
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub

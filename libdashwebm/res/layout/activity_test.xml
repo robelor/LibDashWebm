@@ -8,20 +8,128 @@
         android:id="@+id/test_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:text="Play" />
+
+    <EditText
+        android:id="@+id/video_url"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:text="Test" />
+        android:ems="10" >
 
-    <LinearLayout
-         android:id="@+id/video_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        <requestFocus />
+    </EditText>
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/test_button"
-        android:orientation="vertical" >
+        android:layout_below="@+id/video_url"
+        android:layout_marginTop="24dp"
+        android:text="Buffer Size (s)" />
 
-    </LinearLayout>
+    <EditText
+        android:id="@+id/buffer_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/textView3"
+        android:layout_below="@+id/textView3"
+        android:layout_marginLeft="15dp"
+        android:ems="10"
+        android:inputType="number" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/buffer_size"
+        android:layout_marginTop="21dp"
+        android:text="Buffer Type" />
+
+    <RadioGroup
+        android:id="@+id/buff_type_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/buffer_size"
+        android:layout_below="@+id/textView1" >
+
+        <RadioButton
+            android:id="@+id/radio0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Sync" />
+
+        <RadioButton
+            android:id="@+id/radio1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Async" />
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/alg_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/buff_type_group"
+        android:layout_below="@+id/textView2" >
+
+        <RadioButton
+            android:id="@+id/radio2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Lowest Bitrate" />
+
+        <RadioButton
+            android:id="@+id/radio3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Müller" />
+
+        <RadioButton
+            android:id="@+id/radio4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Look Ahead" />
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/buff_type_group"
+        android:layout_marginTop="21dp"
+        android:text="Adaptation Algorithm" />
+
+    <TextView
+        android:id="@+id/TextView01"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buffer_size"
+        android:layout_toRightOf="@+id/buff_type_group"
+        android:layout_marginLeft="25dp"
+        android:text="Buffer Size (s)" />
+
+    <EditText
+        android:id="@+id/min_buffer_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/buffer_size"
+        android:layout_alignBottom="@+id/buffer_size"
+        android:layout_alignLeft="@+id/TextView01"
+        android:layout_alignRight="@+id/TextView01"
+        android:layout_marginLeft="15dp"
+        android:ems="10"
+        android:inputType="number" />
 
 </RelativeLayout>

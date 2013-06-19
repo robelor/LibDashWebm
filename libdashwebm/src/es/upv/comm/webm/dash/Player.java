@@ -28,11 +28,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
-import es.upv.comm.webm.dash.adaptation.BasicBufferBasedAdaptationManager;
-import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager;
-import es.upv.comm.webm.dash.adaptation.BufferBasedAdaptationManager2;
 import es.upv.comm.webm.dash.adaptation.BufferNetworkBasedAdaptationManager;
-import es.upv.comm.webm.dash.buffer.Buffer;
+import es.upv.comm.webm.dash.adaptation.LowerStreamAdaptationManager;
+import es.upv.comm.webm.dash.buffer.Buffer2;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
 import es.upv.comm.webm.dash.http.NetworkSpeedListener;
 import es.upv.comm.webm.dash.mpd.AdaptationSet;
@@ -40,6 +38,13 @@ import es.upv.comm.webm.dash.mpd.Mpd;
 import es.upv.comm.webm.dash.mpd.Representation;
 
 public class Player implements Debug {
+
+	public static final int BUFFER_SYNC = 1;
+	public static final int BUFFER_ASYNC = 2;
+
+	public static final int ALG_LOWER_BITRATE = 1;
+	public static final int ALG_MULLER = 2;
+	public static final int ALG_LOOk_AHEAD = 3;
 
 	private Context mContext;
 
@@ -49,6 +54,11 @@ public class Player implements Debug {
 	private String mXml;
 
 	private Mpd mpd;
+
+	private int mBufferType;
+	private int mBufferSize;
+	private int mMinBufferSize;
+	private int mAdaptationAlg;
 
 	private AdaptationSet mAudioAdaptationSet;
 	private AdaptationSet mVideoAdaptationSet;
@@ -61,7 +71,7 @@ public class Player implements Debug {
 
 	private AdaptationManager mAdaptationManager;
 
-	private Buffer mBuffer;
+	private Buffer2 mBuffer;
 
 	private FrameLayout mFrameLayout;
 	private SurfaceView[] mSurfaceViews = null;
@@ -76,9 +86,9 @@ public class Player implements Debug {
 	private NetworkSpeedListener mNetworkSpeedListener;
 
 	private VideoThread mVideoThread;
-	
+
 	private Stats mStats;
-	
+
 	private PresentationTimeListener mPresentationTimeListener;
 	private PresentationQualityListener mPresentationQualityListener;
 
@@ -110,6 +120,22 @@ public class Player implements Debug {
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Base URL: " + mBaseUrl);
 
+	}
+
+	public void setBufferSize(int bufferSize) {
+		mBufferSize = bufferSize;
+	}
+	
+	public void setMinBufferSize(int minBufferSize) {
+		mMinBufferSize = minBufferSize;
+	}
+
+	public void setBufferType(int bufferType) {
+		mBufferType = bufferType;
+	}
+
+	public void setAdaptationAlg(int alg) {
+		mAdaptationAlg = alg;
 	}
 
 	public void setPlayerReproductionListener(PlayerReproductionListener playerReproductionListener) {
@@ -152,13 +178,26 @@ public class Player implements Debug {
 					mVideoStreams = new Stream[mVideoAdaptationSet.getRepresentations().size()];
 					int vi = 0;
 					for (Representation representation : mVideoAdaptationSet.getRepresentations()) {
-						Stream videoStream = new Stream(vi,representation, mBaseUrl);
+						Stream videoStream = new Stream(vi, representation, mBaseUrl);
 
 						mVideoStreams[vi++] = videoStream;
 					}
 
-					mAdaptationManager = new BufferNetworkBasedAdaptationManager(mVideoAdaptationSet, mVideoStreams);
-					mBuffer = new Buffer(mVideoStreams, 10000, 5000, mAdaptationManager);
+					// Adaptation Algorithm
+					switch (mAdaptationAlg) {
+					case ALG_LOWER_BITRATE:
+						mAdaptationManager = new LowerStreamAdaptationManager(mVideoAdaptationSet);
+						break;
+					case ALG_MULLER:
+						mAdaptationManager = new BufferNetworkBasedAdaptationManager(mVideoAdaptationSet, mVideoStreams);
+						break;
+					case ALG_LOOk_AHEAD:
+
+						break;
+
+					}
+
+					mBuffer = new Buffer2(mVideoStreams, mBufferType, mBufferSize, mMinBufferSize, mAdaptationManager);
 
 					if (mAdaptationManager instanceof BufferReportListener) {
 						mBuffer.addBufferReportListener((BufferReportListener) mAdaptationManager);
@@ -177,12 +216,12 @@ public class Player implements Debug {
 							mVideoStreams[i].addNetwordSpeedListener(mNetworkSpeedListener);
 						}
 					}
-					
+
 					//
 					mStats = new Stats(mContext);
 					mBuffer.addBufferReportListener(mStats);
 					mPresentationTimeListener = mStats;
-					mPresentationQualityListener =  mStats;
+					mPresentationQualityListener = mStats;
 					for (int i = 0; i < mVideoStreams.length; i++) {
 						mVideoStreams[i].addNetwordSpeedListener(mStats);
 					}
@@ -280,7 +319,7 @@ public class Player implements Debug {
 		private long mDelayTime = 0;
 
 		private Stream[] mStreams;
-		private Buffer mBuffer;
+		private Buffer2 mBuffer;
 
 		private boolean mStreamChanged = false;
 
@@ -290,7 +329,7 @@ public class Player implements Debug {
 
 		private Handler mHandler;
 
-		public VideoThread(Stream[] videoStreams, Buffer buffer) {
+		public VideoThread(Stream[] videoStreams, Buffer2 buffer) {
 
 			mStreams = videoStreams;
 			mBuffer = buffer;
@@ -352,6 +391,8 @@ public class Player implements Debug {
 
 			boolean eos = false;
 
+			byte[] chunk = new byte[1];
+
 			while (Thread.currentThread() == mVideoThread && !sawInputEOS && !sawOutputEOS) {
 
 				long presentationTimeUs = -1;
@@ -382,10 +423,10 @@ public class Player implements Debug {
 							sampleSize = 0;
 						} else {
 							presentationTimeUs = mBuffer.getSampleTime();
-							if(mPresentationTimeListener!=null){
-								mPresentationTimeListener.presentationTime((int)presentationTimeUs);
+							if (mPresentationTimeListener != null) {
+								mPresentationTimeListener.presentationTime((int) presentationTimeUs);
 							}
-							if(mPresentationQualityListener!=null){
+							if (mPresentationQualityListener != null) {
 								mPresentationQualityListener.presentationQuality(mCurrentVideoStream);
 							}
 
@@ -421,8 +462,9 @@ public class Player implements Debug {
 					if (res >= 0) {
 						int outputBufIndex = res;
 						ByteBuffer buf = mVideoCodecOutputBuffers[si][outputBufIndex];
-
-						final byte[] chunk = new byte[info.size];
+						if (chunk.length != info.size) {
+							chunk = new byte[info.size];
+						}
 						buf.get(chunk); // Read the buffer all at once
 						buf.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
 
@@ -532,5 +574,7 @@ public class Player implements Debug {
 		}
 
 	}
+
+
 
 }

@@ -68,6 +68,9 @@ public class HttpInputStreamDataSource
 
   public int read(byte[] buff, int offset, int length) {
     try {
+    	
+//    	System.out.println("---->"+buff+" "+offset+" "+length);
+    	
       int l = in.read(buff, offset, length);
       pos += l;
       return l;

@@ -2,37 +2,30 @@ package es.upv.comm.webm.dash.buffer;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.ebml.matroska.MatroskaBlock;
 
 import android.util.Log;
-
 import es.upv.comm.webm.dash.Debug;
 import es.upv.comm.webm.dash.Frame;
 import es.upv.comm.webm.dash.Stream;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 
-public class Buffer implements Debug {
+public class Buffer2 implements Debug {
 
 	private Stream[] mVideoStreams;
 
+	private int mBufferType;
 	private int mSize;
 	private int mMinSize;
 
 	private int mHeadTimestamp;
 	private int mTailTimestamp;
 
-	private LinkedBlockingQueue<Frame> mFrames;
+	private LinkedBlockingBufferQueue<Frame> mFrames;
 	private BufferFedder mBufferFedder;
-	private final Lock mLock = new ReentrantLock();
-	private final Condition mFull = mLock.newCondition();
 
 	private int mCurrentFedderStream = 0;
 
@@ -40,23 +33,23 @@ public class Buffer implements Debug {
 	private Frame mCurrentFrame;
 
 	private HashSet<BufferReportListener> mBufferReportListeners = new HashSet<BufferReportListener>();
-	
 
 	private AdaptationManager mAdaptationManager;
 
 	private Timer mReportTimer;
 
-	public Buffer(Stream[] videoStreams, int size, int minSize, AdaptationManager adaptationManager) {
+	public Buffer2(Stream[] videoStreams,int bufferType, int size, int minSize, AdaptationManager adaptationManager) {
 
 		mVideoStreams = videoStreams;
 
+		mBufferType = bufferType;
 		mSize = size;
 		mMinSize = minSize;
 
 		mAdaptationManager = adaptationManager;
 
-		mFrames = new LinkedBlockingQueue<Frame>();
-		
+		mFrames = new LinkedBlockingBufferQueue<Frame>(mSize,minSize);
+
 		mCurrentFedderStream = mAdaptationManager.getFirstSegmentTrack();
 
 	}
@@ -77,27 +70,15 @@ public class Buffer implements Debug {
 		if (mBufferFedder != null) {
 			mBufferFedder.stop();
 		}
-		if(mReportTimer!=null){
+		if (mReportTimer != null) {
 			mReportTimer.cancel();
 			mReportTimer = null;
 		}
 	}
 
-	public int getSize() {
-		return mSize;
-	}
 
-	public int getMinSize() {
-		return mMinSize;
-	}
 
-	public long getHeadTimestamp() {
-		return mHeadTimestamp;
-	}
 
-	public long getTailTimestamp() {
-		return mTailTimestamp;
-	}
 
 	public boolean addBufferReportListener(BufferReportListener listener) {
 		return mBufferReportListeners.add(listener);
@@ -108,38 +89,27 @@ public class Buffer implements Debug {
 	}
 
 	public void fireBufferReport(BufferReport bufferReport) {
-		
-//		 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer Report: "+bufferReport.toString());
-		
-		
+		// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer Report: "+bufferReport.toString());
 		for (BufferReportListener listener : mBufferReportListeners) {
 			listener.bufferReport(bufferReport);
 		}
 	}
-	
+
 	public boolean advance() {
 
 		try {
-
-			try {
-				mCurrentFrame = mFrames.take();
-				Frame head = mFrames.peek();
-				if (head != null) {
-					mHeadTimestamp = head.getFrameTime();
-				} else {
-					mHeadTimestamp = 0;
-					mTailTimestamp = 0;
-				}
-				mLock.lock();
-				mFull.signal();
-				return true;
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				return false;
+			mCurrentFrame = mFrames.take();
+			Frame head = mFrames.peek();
+			if (head != null) {
+				mHeadTimestamp = head.getFrameTime();
+			} else {
+				mHeadTimestamp = 0;
+				mTailTimestamp = 0;
 			}
-
-		} finally {
-			mLock.unlock();
+			return true;
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return false;
 		}
 
 	}
@@ -147,16 +117,10 @@ public class Buffer implements Debug {
 	public void put(Frame frame) {
 		// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Put, frame time: " + frame.getFrameTime());
 
-		mLock.lock();
-		try {
+
 			try {
 
 				mFrames.put(frame);
-
-				while (mSize <= (mTailTimestamp - mHeadTimestamp)) {
-					// Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Fedder Stopped");
-					mFull.await();
-				}
 
 				mTailTimestamp = frame.getFrameTime();
 				if (mFrames.size() == 0) {
@@ -166,9 +130,7 @@ public class Buffer implements Debug {
 				e.printStackTrace();
 			}
 
-		} finally {
-			mLock.unlock();
-		}
+
 
 	}
 
@@ -235,11 +197,14 @@ public class Buffer implements Debug {
 					mCurrentFedderStream = next;
 					s = mVideoStreams[next];
 
-					 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to stream: "+next);
+					Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Seek to stream: " + next);
 					
-					boolean finished = !s.seekTo(++mCurrentSegment);
-					
-					if(finished){
+//					if(mCurrentSegment == 19)
+//						mCurrentSegment = 23;
+
+					boolean finished = !s.seekTo(++mCurrentSegment, mBufferType);
+
+					if (finished) {
 						break;
 					}
 
@@ -252,8 +217,8 @@ public class Buffer implements Debug {
 				put(tail);
 
 			}
-			
-			 Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer feeder finised");
+
+			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Buffer feeder finised");
 		}
 
 	}
@@ -262,7 +227,7 @@ public class Buffer implements Debug {
 
 		@Override
 		public void run() {
-			BufferReport br = new BufferReport(mSize, mHeadTimestamp, mTailTimestamp);
+			BufferReport br = new BufferReport(mSize, mFrames.getMeasuredSize());
 			fireBufferReport(br);
 
 		}

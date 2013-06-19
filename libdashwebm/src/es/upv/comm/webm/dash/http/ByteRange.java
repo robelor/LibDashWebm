@@ -35,7 +35,7 @@ public class ByteRange {
 	}
 
 	public int getRangeSize() {
-		return endByte - initByte;
+		return (endByte - initByte);
 	}
 
 	public String getRangeProperty() {

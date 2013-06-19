@@ -44,7 +44,7 @@ public class Cluster implements Debug {
 		if (rootElement.equals(MatroskaDocType.Cluster_Id)) {
 			init(rootElement, ebmlReader, dataSource);
 		} else {
-			throw new ParseException("Error: This is not a Cluster");
+			throw new ParseException("Error: This is not a Cluster");  
 		}
 
 	}

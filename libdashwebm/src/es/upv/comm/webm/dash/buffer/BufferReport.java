@@ -4,26 +4,23 @@ public class BufferReport {
 
 	private int mSize;
 
-	private int mHeadTime;
-	private int mTailTime;
+	private int mMeasuredSize;
 
-	public BufferReport(int size, int headTime, int tailTime) {
+	public BufferReport(int size, int measuredSize) {
 
 		mSize = size;
-		mHeadTime = headTime;
-		mTailTime = tailTime;
+		mMeasuredSize = measuredSize;
 
 	}
 
 	public int getBufferUsage() {
-		int aux = (int) (mTailTime - mHeadTime);
-		int usage = (aux * 100) / mSize;
+		int usage = (mMeasuredSize * 100) / mSize;
 		return usage;
 	}
 
 	@Override
 	public String toString() {
-		return "Size: " + mSize + "  Head time: " + mHeadTime + "  Tail time: " + mTailTime + " Buffer%: " + getBufferUsage();
+		return "Size: " + mSize + " Buffer%: " + getBufferUsage();
 	}
 
 }
