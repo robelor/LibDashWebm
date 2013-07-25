@@ -16,15 +16,22 @@ import es.upv.comm.webm.dash.container.segment.cueing.Cues;
 import es.upv.comm.webm.dash.container.segment.info.Info;
 import es.upv.comm.webm.dash.container.segment.seek.SeekHead;
 import es.upv.comm.webm.dash.container.segment.track.Track;
+import es.upv.comm.webm.dash.http.ByteRange;
+import es.upv.comm.webm.dash.mpd.Representation;
 import es.upv.comm.webm.dash.util.HexByteArray;
 
 public class Segment implements Debug {
 
+	private Representation mRepresentation;
 	private int mSegmentOffset;
 	private SeekHead mSeekHead;
 	private Info mInfo;
 	private Track mTrack;
 	private Cues mCues;
+	
+	public void setRepresentation(Representation representation) {
+		this.mRepresentation = representation;
+	}
 	
 	public int getSegmentOffset() {
 		return mSegmentOffset;
@@ -61,18 +68,45 @@ public class Segment implements Debug {
 	public Cues getCues() {
 		return mCues;
 	}
+	
+	public ByteRange getCueByteRange(int index){
+		ByteRange br = null;
+		
+		CuePoint curretCuePoint = null;
+		if (mCues.getCuePoints().size() > index) {
+			curretCuePoint = mCues.getCuePoints().get(index);
+		}
+
+		CuePoint nextCuePoint = null;
+		if (mCues.getCuePoints().size() > index + 1) {
+			nextCuePoint = mCues.getCuePoints().get(index + 1);
+		} else {
+			// last cue point
+		}
+		
+		
+		if (curretCuePoint != null) {
+			if (nextCuePoint != null) {
+				br = new ByteRange(curretCuePoint.getClusterOffset(), nextCuePoint.getClusterOffset());
+			} else {
+				br = new ByteRange(curretCuePoint.getClusterOffset(), mRepresentation.getIndexRange().getInitByte());
+			}
+		}
+		
+		return br;
+	}
 
 	public void setCues(Cues cues) {
 		mCues = cues;
 		mCues.setSegmentOffset(mSegmentOffset);
 	}
 
-	public static Segment create(DataSource dataSource) {
+	public static Segment create(Representation representation,DataSource dataSource) {
 		EBMLReader reader = new EBMLReader(dataSource, MatroskaDocType.obj);
-		return create(reader, dataSource);
+		return create(representation, reader, dataSource);
 	}
 
-	private static Segment create(EBMLReader ebmlReader, DataSource dataSource) {
+	private static Segment create(Representation representation,EBMLReader ebmlReader, DataSource dataSource) {
 
 		Element rootElement = ebmlReader.readNextElement();
 		if (rootElement == null) {
@@ -80,18 +114,21 @@ public class Segment implements Debug {
 		}
 
 		if (rootElement.equals(MatroskaDocType.Segment_Id)) {
-			return create(rootElement, ebmlReader, dataSource);
+			return create(representation, rootElement, ebmlReader, dataSource);
 		} else {
 			return null;
 		}
 
 	}
+	
 
-	public static Segment create(Element segmentElement, EBMLReader ebmlReader, DataSource dataSource) {
+	public static Segment create( Representation representation, Element segmentElement, EBMLReader ebmlReader, DataSource dataSource) {
+		
 		int exitCount = 0;
 		boolean finished = false;
 
 		Segment segment = new Segment();
+		segment.setRepresentation(representation);
 		segment.setSegmentOffset((int) dataSource.getFilePointer());
 
 		if (D)

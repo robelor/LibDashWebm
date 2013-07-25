@@ -24,7 +24,8 @@ public class HttpUtils implements Debug {
 			String rangeProperty = byteRange.getRangeProperty();
 			connection.addRequestProperty("range", rangeProperty);
 			
-			return connection.getInputStream(); 
+//			return connection.getInputStream(); 
+			return new SpeedOMeterInpotStream(connection.getInputStream(), byteRange.getRangeSize(),index, networkSpeedListener);
 	}
 	
 	public static InputStream getAsyncUrlRangeInputStream(URL url, ByteRange byteRange, int index, NetworkSpeedListener networkSpeedListener)  throws IOException {

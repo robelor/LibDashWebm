@@ -29,6 +29,7 @@ import android.view.SurfaceView;
 import android.widget.FrameLayout;
 import es.upv.comm.webm.dash.adaptation.AdaptationManager;
 import es.upv.comm.webm.dash.adaptation.BufferNetworkBasedAdaptationManager;
+import es.upv.comm.webm.dash.adaptation.LookAheadAdaptationManager;
 import es.upv.comm.webm.dash.adaptation.LowerStreamAdaptationManager;
 import es.upv.comm.webm.dash.buffer.Buffer2;
 import es.upv.comm.webm.dash.buffer.BufferReportListener;
@@ -192,7 +193,7 @@ public class Player implements Debug {
 						mAdaptationManager = new BufferNetworkBasedAdaptationManager(mVideoAdaptationSet, mVideoStreams);
 						break;
 					case ALG_LOOk_AHEAD:
-
+						mAdaptationManager = new LookAheadAdaptationManager(mVideoAdaptationSet, mVideoStreams);
 						break;
 
 					}

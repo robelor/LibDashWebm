@@ -50,7 +50,7 @@ public class TestActivity extends Activity implements Debug {
 		settings = getPreferences(MODE_PRIVATE);
 
 		mUrlTextView = (TextView) findViewById(R.id.video_url);
-		mUrlTextView.setText(settings.getString(SETTING_URL, "http://172.16.0.100/ed/ed.xml"));
+		mUrlTextView.setText(settings.getString(SETTING_URL, "http://172.16.0.100/ed/ed3.xml"));
 		mUrlTextView.addTextChangedListener(mUrlTextViewTextChangeListener);
 
 		mBufferSizeTextView = (TextView) findViewById(R.id.buffer_size);

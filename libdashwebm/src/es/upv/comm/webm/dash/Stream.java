@@ -92,28 +92,14 @@ public class Stream implements Debug, NetworkSpeedListener {
 		mCurrentCueIndex = index;
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "Stream: " + mUrl + "  Cue point: " + mCurrentCueIndex);
-
-		CuePoint curretCuePoint = null;
-		if (mCuePoints.size() > index) {
-			curretCuePoint = mCuePoints.get(index);
-		}
-
-		CuePoint nextCuePoint = null;
-		if (mCuePoints.size() > index + 1) {
-			nextCuePoint = mCuePoints.get(index + 1);
-		} else {
-			// last cue point
-		}
-
-		if (curretCuePoint != null) {
-			if (nextCuePoint != null) {
-				mCurrentByteRange = new ByteRange(curretCuePoint.getClusterOffset(), nextCuePoint.getClusterOffset());
-			} else {
-				mCurrentByteRange = new ByteRange(curretCuePoint.getClusterOffset(), mRepresentation.getIndexRange().getInitByte());
-			}
-		} else {
+		
+		
+		mCurrentByteRange = mContainer.getSegment().getCueByteRange(mCurrentCueIndex);
+		
+		if(mCurrentByteRange==null){
 			return false;
 		}
+		
 
 		if (D)
 			Log.d(LOG_TAG, this.getClass().getSimpleName() + ": " + "  Cluster range: " + mCurrentByteRange + " Size: " + mCurrentByteRange.getRangeSize()
@@ -192,6 +178,14 @@ public class Stream implements Debug, NetworkSpeedListener {
 
 	public Representation getRepresentation() {
 		return mRepresentation;
+	}
+	
+	public Container getContainer() {
+		return mContainer;
+	}
+	
+	public ArrayList<CuePoint> getCuePoints() {
+		return mCuePoints;
 	}
 
 	@Override

@@ -88,7 +88,7 @@ public class Container implements Debug {
 			if (rootElement.equals(MatroskaDocType.Segment_Id)) {
 				if (D)
 					Log.d(LOG_TAG, Container.class.getSimpleName() + ": " + "Parsing Segment...");
-				setSegment(Segment.create(rootElement, reader, dataSource));
+				setSegment(Segment.create(mRepresentation, rootElement, reader, dataSource));
 			}
 
 			rootElement = reader.readNextElement();

@@ -116,9 +116,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/buffer_size"
-        android:layout_toRightOf="@+id/buff_type_group"
         android:layout_marginLeft="25dp"
-        android:text="Buffer Size (s)" />
+        android:layout_toRightOf="@+id/buff_type_group"
+        android:text="Pre-buffer Size (s)" />
 
     <EditText
         android:id="@+id/min_buffer_size"
